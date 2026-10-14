@@ -1,0 +1,16 @@
+{
+  "id": "college.enzyme",
+  "title": "酶动力学（米氏方程）",
+  "camera": { "position": [0, 1.5, 6], "target": [0, 0.5, 0] },
+  "objects": [],
+  "params": [
+    { "id": "Km", "label": "米氏常数 Km", "min": 0.5, "max": 5, "step": 0.1, "value": 2, "unit": "mmol/L" },
+    { "id": "Vmax", "label": "最大速率 Vmax", "min": 0.5, "max": 2, "step": 0.1, "value": 1, "unit": "μmol/(L·min)" }
+  ],
+  "records": [
+    { "id": "S", "label": "[S] (mmol/L)", "digits": 1 },
+    { "id": "v", "label": "v", "digits": 3 }
+  ],
+  "curve": { "x": "S", "y": "v", "title": "米氏曲线 v – [S]（低浓度近似一级、高浓度零级饱和）" },
+  "guide": "紫色为酶、橙色为底物。米氏方程 v = Vmax·[S]/(Km+[S])：低底物浓度时 v ∝ [S]（一级反应），高浓度时酶被饱和 v → Vmax（零级反应）。Km 表示速率达 Vmax 一半时的底物浓度，反映酶与底物的亲和力（Km 越小亲和越强）。双倒数作图（Lineweaver–Burk）可将双曲线化为直线求参数。"
+}

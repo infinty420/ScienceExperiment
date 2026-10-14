@@ -1,0 +1,16 @@
+{
+  "id": "college.uncertainty",
+  "title": "测量不确定度评定",
+  "camera": { "position": [0, 1, 6], "target": [0, 0, 0] },
+  "objects": [],
+  "params": [
+    { "id": "n", "label": "测量次数 n", "min": 5, "max": 20, "step": 1, "value": 10 },
+    { "id": "tol", "label": "仪器允差 Δ仪", "min": 0.005, "max": 0.05, "step": 0.005, "value": 0.02, "unit": "mm" }
+  ],
+  "records": [
+    { "id": "x", "label": "测量值 (mm)", "digits": 3 },
+    { "id": "d", "label": "残差 (mm)", "digits": 3 }
+  ],
+  "curve": { "x": "x", "y": "d", "title": "残差分布（评估随机误差）" },
+  "guide": "对同一量（约 10.000 mm）等精度重复测量。每次点击「开始」重新采样：x̄ 为算术平均，s 为实验标准差；A 类不确定度 uA = s/√n（随机误差），B 类 uB = Δ仪/√3（仪器误差），合成 uc = √(uA²+uB²)，扩展不确定度 U = 2uc（95% 置信，k=2）。"
+}

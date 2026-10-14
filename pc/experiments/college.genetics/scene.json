@@ -1,0 +1,11 @@
+{
+  "id": "college.genetics",
+  "title": "孟德尔遗传杂交模拟",
+  "camera": { "position": [0, 1.5, 6], "target": [0, 0.6, 0] },
+  "objects": [],
+  "params": [
+    { "id": "cross", "label": "杂交组合（0:Aa×Aa / 1:AA×aa / 2:Aa×aa）", "min": 0, "max": 2, "step": 1, "value": 0 }
+  ],
+  "records": [],
+  "guide": "豌豆子叶颜色：黄(Y)对绿(y)显性。Aa×Aa 自交 → F2 表型 3 黄:1 绿（基因型 1:2:1，分离定律）；AA×aa → F1 全黄(Aa)；Aa×aa 测交 → 1:1，验证配子纯度。大样本统计结果符合概率比——这正是孟德尔 1865 年的统计思想。"
+}

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { SUBJECTS, EXPERIMENTS, experimentsOf, difficultyLabel, type ExperimentInfo } from './data/experiments'
+import { getHistory, clearHistory, type HistoryEntry } from './store/history'
 import ExperimentStage from './components/ExperimentStage.vue'
 
 type View = 'list' | 'stage'
@@ -8,6 +9,7 @@ type View = 'list' | 'stage'
 const EXPERIMENTS_DEMO: ExperimentInfo = EXPERIMENTS.find((e) => e.id === 'w1.demo')!
 
 const view = ref<View>('list')
+const history = ref<HistoryEntry[]>(getHistory())
 const subjectKey = ref('physics')
 const current = ref<ExperimentInfo | null>(null)
 
@@ -28,6 +30,12 @@ function openExperiment(e: ExperimentInfo): void {
 function backToList(): void {
   view.value = 'list'
   current.value = null
+  history.value = getHistory()
+}
+
+function onClearHistory(): void {
+  clearHistory()
+  history.value = []
 }
 </script>
 
@@ -58,14 +66,22 @@ function backToList(): void {
           <span class="nav-icon">▶</span>
           <span>W1 渲染验证</span>
         </div>
+        <div
+          class="nav-item"
+          :class="{ active: view === 'list' && subjectKey === '__history' }"
+          @click="subjectKey = '__history'; view = 'list'"
+        >
+          <span class="nav-icon">✓</span>
+          <span>我的成绩</span>
+        </div>
       </nav>
 
-      <div class="sidebar-footer">W1 · PC 主线 · 全程离线</div>
+      <div class="sidebar-footer">v0.7 · 21 个实验 · 全程离线</div>
     </aside>
 
     <!-- 主区域 -->
     <main class="main">
-      <template v-if="view === 'list'">
+      <template v-if="view === 'list' && subjectKey !== '__history'">
         <header class="list-header">
           <h1>{{ subjectInfo.label }}实验室</h1>
           <span class="list-count">{{ list.length }} 个实验</span>
@@ -94,6 +110,24 @@ function backToList(): void {
 
       <template v-else-if="view === 'stage' && current">
         <ExperimentStage :experiment-id="current.id" :title="current.title" @back="backToList" />
+      </template>
+
+      <template v-else-if="subjectKey === '__history'">
+        <header class="list-header">
+          <h1>我的成绩</h1>
+          <span class="list-count">{{ history.length }} 条完成记录</span>
+          <button v-if="history.length" class="clear-btn" @click="onClearHistory">清空</button>
+        </header>
+        <div class="list-grid">
+          <div v-for="h in history" :key="h.experimentId" class="exp-card">
+            <div class="exp-title">{{ h.title }}</div>
+            <div class="exp-meta"><span>{{ h.date }}</span><span>·</span><span>{{ h.rowCount }} 组数据</span></div>
+            <div class="history-result">{{ h.resultLines[0] }}</div>
+          </div>
+          <div v-if="history.length === 0" class="empty-history">
+            还没有完成的实验。进入实验室完成任一实验后，成绩会自动保存在本地。
+          </div>
+        </div>
       </template>
     </main>
   </div>
@@ -268,5 +302,30 @@ function backToList(): void {
   color: #fff;
   background: #3f8f79;
   border-color: #3f8f79;
+}
+
+.clear-btn {
+  margin-left: auto;
+  font-size: 12px;
+  color: #c05a5a;
+  background: none;
+  padding: 4px 10px;
+}
+
+.history-result {
+  font-size: 12px;
+  color: #3a8a6a;
+  background: #eaf5f0;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-family: Consolas, monospace;
+}
+
+.empty-history {
+  grid-column: 1 / -1;
+  text-align: center;
+  color: #aaa;
+  font-size: 13px;
+  padding: 60px 0;
 }
 </style>

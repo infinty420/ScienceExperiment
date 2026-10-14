@@ -6,6 +6,8 @@ import { getSceneDef, buildExperiment } from '../experiments/loader'
 import type { PhysicsWorld } from '../engine/physics'
 import type { ExperimentLogic, ParamDef, RecordColumn, Row } from '../experiments/types'
 import DataPanel from './DataPanel.vue'
+import { saveHistory } from '../store/history'
+import { searchFaq } from '../data/faq'
 
 const props = defineProps<{ experimentId: string; title: string }>()
 const emit = defineEmits<{ (e: 'back'): void }>()
@@ -37,9 +39,29 @@ function post(type: string, payload: Record<string, unknown>): void {
     rows.value.push(payload.row as number[])
     return
   }
+  if (type === 'rows') {
+    rows.value = payload.rows as number[][]
+    return
+  }
   if (type === 'result') {
     resultLines.value = payload.lines as string[]
     state.value = 'done'
+    // W8：保存历史成绩
+    const def = getSceneDef(props.experimentId)
+    if (def) {
+      const paramLabels: Record<string, string> = {}
+      for (const p of params.value) paramLabels[p.id] = p.label
+      saveHistory({
+        experimentId: props.experimentId,
+        title: props.title,
+        subject: def.id.split('.')[0],
+        date: new Date().toLocaleString('zh-CN'),
+        params: { ...paramValues.value },
+        paramLabels,
+        resultLines: resultLines.value,
+        rowCount: rows.value.length
+      })
+    }
     return
   }
   if (type === 'theory') {
@@ -139,6 +161,59 @@ function reset(): void {
   theory.value = null
   noteText.value = ''
 }
+
+/** W6：导出实验报告（自包含 HTML，可打印转 PDF） */
+function exportReport(): void {
+  const def = getSceneDef(props.experimentId)
+  const chartCanvas = document.querySelector('.data-panel .chart') as HTMLCanvasElement | null
+  const chartImg = chartCanvas ? chartCanvas.toDataURL('image/png') : ''
+  const paramRows = params.value
+    .map((p) => `<tr><td>${p.label}</td><td>${paramValues.value[p.id] ?? '—'} ${p.unit ?? ''}</td></tr>`)
+    .join('')
+  const dataRows = rows.value
+    .map((r) => `<tr>${r.map((v) => `<td>${v}</td>`).join('')}</tr>`)
+    .join('')
+  const headCells = columns.value.map((c) => `<th>${c.label}</th>`).join('')
+  const resultHtml = resultLines.value.map((l) => `<li>${l}</li>`).join('')
+  const html = `<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><title>实验报告 - ${props.title}</title>
+<style>body{font-family:'Microsoft YaHei',sans-serif;max-width:800px;margin:24px auto;color:#222;padding:0 16px}
+h1{font-size:22px;border-bottom:2px solid #3f8f79;padding-bottom:8px}h2{font-size:16px;color:#3f8f79;margin-top:20px}
+table{border-collapse:collapse;width:100%;font-size:13px}th,td{border:1px solid #ccc;padding:5px 9px;text-align:left}
+th{background:#eaf5f0}img{max-width:100%;border:1px solid #eee}li{line-height:1.9;margin:4px 0}</style></head><body>
+<h1>智实验 SciLab · 实验报告</h1>
+<p>实验名称：${props.title} ｜ 完成时间：${new Date().toLocaleString('zh-CN')} ｜ 记录 ${rows.value.length} 组数据</p>
+<h2>一、实验参数</h2><table><tr><th>参数</th><th>取值</th></tr>${paramRows || '<tr><td colspan="2">无</td></tr>'}</table>
+<h2>二、数据记录</h2><table><tr>${headCells}</tr>${dataRows || '<tr><td colspan="9">（无数据）</td></tr>'}</table>
+${chartImg ? `<h2>三、曲线</h2><img src="${chartImg}" alt="curve">` : ''}
+<h2>四、结论</h2><ol>${resultHtml || '<li>（未生成结论，请完成实验）</li>'}</ol>
+${def?.guide ? `<h2>五、实验原理</h2><p style="line-height:1.8;color:#555">${def.guide}</p>` : ''}
+<p style="margin-top:28px;color:#999;font-size:12px">由智实验 SciLab（理科 3D 虚拟实验室）自动生成 · 全程离线</p>
+</body></html>`
+  const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `实验报告_${props.title}_${new Date().toISOString().slice(0, 10)}.html`
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
+/** W9：本地 AI 助教（检索式知识库） */
+const aiOpen = ref(false)
+const aiQuestion = ref('')
+const aiAnswer = ref('')
+const aiHit = ref(false)
+
+function askAi(): void {
+  const hit = searchFaq(props.experimentId, aiQuestion.value.trim())
+  if (hit) {
+    aiAnswer.value = hit.a
+    aiHit.value = true
+  } else {
+    aiAnswer.value = '这个问题超出了本地知识库（离线检索式助教）。可以尝试提问：误差原因、视角操作、数据导出，或查看右侧「实验说明」。接入端侧大模型后（方案 W9 第②级）可回答更开放的问题。'
+    aiHit.value = false
+  }
+}
 </script>
 
 <template>
@@ -146,7 +221,27 @@ function reset(): void {
     <div class="toolbar">
       <button class="back" @click="emit('back')">‹ 返回</button>
       <span class="title">{{ title }}</span>
+      <button class="tool-btn" @click="exportReport">导出报告</button>
+      <button class="tool-btn" @click="aiOpen = true">AI 助教</button>
       <span class="fps" :class="{ ok: fps > 0 }">{{ fps > 0 ? `${fps} FPS` : '…' }}</span>
+    </div>
+
+    <!-- AI 助教弹窗 -->
+    <div class="ai-mask" v-if="aiOpen" @click.self="aiOpen = false">
+      <div class="ai-dialog">
+        <div class="ai-head">
+          <span>AI 助教 · 本地知识库（离线）</span>
+          <button class="ai-close" @click="aiOpen = false">✕</button>
+        </div>
+        <div class="ai-body">
+          <div class="ai-ask">
+            <input v-model="aiQuestion" placeholder="例如：为什么实测值有误差？" @keyup.enter="askAi" />
+            <button class="btn primary" @click="askAi">提问</button>
+          </div>
+          <div class="ai-answer" v-if="aiAnswer" :class="{ miss: !aiHit }">{{ aiAnswer }}</div>
+          <div class="ai-tip" v-else>可尝试：误差原因 / 怎么调视角 / 数据怎么导出，以及本实验专属问题</div>
+        </div>
+      </div>
     </div>
 
     <div class="body">
@@ -211,6 +306,7 @@ function reset(): void {
   display: flex;
   flex-direction: column;
   height: 100%;
+  position: relative;
 }
 
 .toolbar {
@@ -243,6 +339,96 @@ function reset(): void {
 
 .fps.ok {
   color: #3f8f79;
+}
+
+.tool-btn {
+  margin-left: 14px;
+  padding: 4px 12px;
+  font-size: 12px;
+  background: #eef1f4;
+  color: #445;
+}
+
+.tool-btn:hover {
+  background: #dfe6ec;
+}
+
+.ai-mask {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+}
+
+.ai-dialog {
+  width: 400px;
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.ai-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: #3f8f79;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.ai-close {
+  background: none;
+  color: #fff;
+  font-size: 14px;
+}
+
+.ai-body {
+  padding: 16px;
+}
+
+.ai-ask {
+  display: flex;
+  gap: 8px;
+}
+
+.ai-ask input {
+  flex: 1;
+  border: 1px solid #d8dde2;
+  border-radius: 6px;
+  padding: 7px 10px;
+  font-size: 13px;
+  outline: none;
+}
+
+.ai-ask input:focus {
+  border-color: #3f8f79;
+}
+
+.ai-answer {
+  margin-top: 12px;
+  background: #eaf5f0;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: #2c6e5c;
+}
+
+.ai-answer.miss {
+  background: #f5f0e6;
+  color: #8a7040;
+}
+
+.ai-tip {
+  margin-top: 12px;
+  font-size: 12px;
+  color: #999;
 }
 
 .body {

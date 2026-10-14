@@ -47,11 +47,11 @@ export const EXPERIMENTS: ExperimentInfo[] = [
   { id: 'biology.cell', title: '细胞结构 3D 探索', subject: 'biology', subjectLabel: '生物', difficulty: 1, wave: 'W5', available: true },
   { id: 'biology.photosynthesis', title: '光合作用过程模拟', subject: 'biology', subjectLabel: '生物', difficulty: 2, wave: 'W5', available: true },
   // 大学 W7
-  { id: 'college.titration', title: '酸碱滴定分析（曲线绘制）', subject: 'college', subjectLabel: '大学实验', difficulty: 2, wave: 'W7', available: false },
-  { id: 'college.rlc', title: 'RLC 串联电路谐振', subject: 'college', subjectLabel: '大学实验', difficulty: 3, wave: 'W7', available: false },
-  { id: 'college.uncertainty', title: '测量不确定度评定', subject: 'college', subjectLabel: '大学实验', difficulty: 2, wave: 'W7', available: false },
-  { id: 'college.genetics', title: '孟德尔遗传杂交模拟', subject: 'college', subjectLabel: '大学实验', difficulty: 2, wave: 'W7', available: false },
-  { id: 'college.enzyme', title: '酶动力学（米氏方程）', subject: 'college', subjectLabel: '大学实验', difficulty: 3, wave: 'W7', available: false }
+  { id: 'college.titration', title: '酸碱滴定分析（乙酸 pKa 测定）', subject: 'college', subjectLabel: '大学实验', difficulty: 2, wave: 'W7', available: true },
+  { id: 'college.rlc', title: 'RLC 串联电路谐振', subject: 'college', subjectLabel: '大学实验', difficulty: 3, wave: 'W7', available: true },
+  { id: 'college.uncertainty', title: '测量不确定度评定', subject: 'college', subjectLabel: '大学实验', difficulty: 2, wave: 'W7', available: true },
+  { id: 'college.genetics', title: '孟德尔遗传杂交模拟', subject: 'college', subjectLabel: '大学实验', difficulty: 2, wave: 'W7', available: true },
+  { id: 'college.enzyme', title: '酶动力学（米氏方程）', subject: 'college', subjectLabel: '大学实验', difficulty: 3, wave: 'W7', available: true }
 ]
 
 export function experimentsOf(subject: string): ExperimentInfo[] {

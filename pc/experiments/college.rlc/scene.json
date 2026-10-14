@@ -1,0 +1,17 @@
+{
+  "id": "college.rlc",
+  "title": "RLC 串联电路谐振",
+  "camera": { "position": [0, 1.5, 6], "target": [0, 0, 0] },
+  "objects": [],
+  "params": [
+    { "id": "L", "label": "电感 L", "min": 0.1, "max": 10, "step": 0.1, "value": 1, "unit": "mH" },
+    { "id": "C", "label": "电容 C", "min": 0.1, "max": 10, "step": 0.1, "value": 1, "unit": "µF" },
+    { "id": "R", "label": "电阻 R", "min": 1, "max": 50, "step": 1, "value": 10, "unit": "Ω" }
+  ],
+  "records": [
+    { "id": "f", "label": "f (Hz)", "digits": 0 },
+    { "id": "I", "label": "I (A)", "digits": 3 }
+  ],
+  "curve": { "x": "f", "y": "I", "title": "幅频特性 I – f（谐振峰在 f₀ = 1/(2π√LC)）" },
+  "guide": "RLC 串联电路（U = 5V）：阻抗 Z = √(R² + (ωL − 1/ωC)²)，当 ωL = 1/ωC 时电路谐振，电流最大 I₀ = U/R。品质因数 Q = (1/R)√(L/C) 决定曲线尖锐程度。改变 L、C 可移动谐振频率，改变 R 可调节带宽。"
+}
