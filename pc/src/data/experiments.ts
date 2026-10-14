@@ -27,10 +27,10 @@ export const EXPERIMENTS: ExperimentInfo[] = [
   { id: 'w1.demo', title: 'W1 渲染管线验证 · 3D 实验台', subject: 'demo', subjectLabel: '演示', difficulty: 1, wave: 'W1', available: true },
 
   // 物理 W2 力学
-  { id: 'physics.inclined_plane', title: '斜面上物体运动探究', subject: 'physics', subjectLabel: '物理', difficulty: 1, wave: 'W2', available: false },
-  { id: 'physics.free_fall', title: '自由落体运动测定', subject: 'physics', subjectLabel: '物理', difficulty: 1, wave: 'W2', available: false },
-  { id: 'physics.pendulum', title: '单摆测重力加速度', subject: 'physics', subjectLabel: '物理', difficulty: 2, wave: 'W2', available: false },
-  { id: 'physics.projectile', title: '平抛运动规律探究', subject: 'physics', subjectLabel: '物理', difficulty: 2, wave: 'W2', available: false },
+  { id: 'physics.inclined_plane', title: '斜面上物体运动探究', subject: 'physics', subjectLabel: '物理', difficulty: 1, wave: 'W2', available: true },
+  { id: 'physics.free_fall', title: '自由落体运动测定', subject: 'physics', subjectLabel: '物理', difficulty: 1, wave: 'W2', available: true },
+  { id: 'physics.pendulum', title: '单摆测重力加速度', subject: 'physics', subjectLabel: '物理', difficulty: 2, wave: 'W2', available: true },
+  { id: 'physics.projectile', title: '平抛运动规律探究', subject: 'physics', subjectLabel: '物理', difficulty: 2, wave: 'W2', available: true },
   // 物理 W3 电学/光学
   { id: 'physics.circuit_basic', title: '基础电路搭建', subject: 'physics', subjectLabel: '物理', difficulty: 2, wave: 'W3', available: false },
   { id: 'physics.lens', title: '凸透镜成像规律', subject: 'physics', subjectLabel: '物理', difficulty: 1, wave: 'W3', available: false },

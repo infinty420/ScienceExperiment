@@ -1,0 +1,29 @@
+{
+  "id": "w1.demo",
+  "title": "渲染管线验证 · 3D 实验台",
+  "camera": { "position": [5, 4.5, 7], "target": [0, 0.8, 0] },
+  "objects": [
+    {
+      "id": "bench",
+      "type": "box",
+      "size": [6, 0.25, 4],
+      "position": [0, 0.125, 0],
+      "static": true,
+      "color": "#2e4051",
+      "noPhysics": true
+    },
+    {
+      "id": "cube",
+      "type": "box",
+      "size": [1.2, 1.2, 1.2],
+      "position": [0, 0.85, 0],
+      "color": "#3f8f79",
+      "noPhysics": true
+    }
+  ],
+  "params": [
+    { "id": "speed", "label": "转速", "min": 0, "max": 3, "step": 0.1, "value": 1, "unit": "rad/s" }
+  ],
+  "records": [],
+  "guide": "引擎渲染管线与桥接验证：拖拽旋转视角，滚轮缩放。"
+}

@@ -12,6 +12,8 @@
   },
   "dependencies": {
     "@tauri-apps/api": "^2.1.0",
+    "cannon-es": "^0.20.0",
+    "three": "^0.186.1",
     "vue": "^3.4.38"
   },
   "devDependencies": {
