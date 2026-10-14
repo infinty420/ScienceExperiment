@@ -10,6 +10,18 @@ const EXPERIMENTS_DEMO: ExperimentInfo = EXPERIMENTS.find((e) => e.id === 'w1.de
 
 const view = ref<View>('list')
 const history = ref<HistoryEntry[]>(getHistory())
+const searchKey = ref('')
+
+const searchResults = computed(() => {
+  const k = searchKey.value.trim().toLowerCase()
+  if (!k) return []
+  return EXPERIMENTS.filter(
+    (e) => e.available && e.id !== 'w1.demo' && (e.title.toLowerCase().includes(k) || e.subjectLabel.includes(k))
+  )
+})
+
+const totalAvailable = computed(() => EXPERIMENTS.filter((e) => e.available && e.id !== 'w1.demo').length)
+const progressPct = computed(() => Math.round((history.value.length / totalAvailable.value) * 100))
 const subjectKey = ref('physics')
 const current = ref<ExperimentInfo | null>(null)
 
@@ -52,6 +64,9 @@ function onClearHistory(): void {
       </div>
 
       <nav class="nav">
+        <div class="search-box">
+          <input v-model="searchKey" placeholder="搜索实验…" />
+        </div>
         <div
           v-for="s in SUBJECTS"
           :key="s.key"
@@ -81,11 +96,39 @@ function onClearHistory(): void {
 
     <!-- 主区域 -->
     <main class="main">
-      <template v-if="view === 'list' && subjectKey !== '__history'">
+      <template v-if="searchKey.trim()">
+        <header class="list-header">
+          <h1>搜索结果</h1>
+          <span class="list-count">「{{ searchKey }}」匹配 {{ searchResults.length }} 个实验</span>
+        </header>
+        <div class="list-grid">
+          <div
+            v-for="e in searchResults"
+            :key="e.id"
+            class="exp-card"
+            @click="openExperiment(e)"
+          >
+            <div class="exp-title">{{ e.title }}</div>
+            <div class="exp-meta">
+              <span>{{ e.subjectLabel }}</span><span>·</span>
+              <span>难度 {{ difficultyLabel(e.difficulty) }}</span>
+            </div>
+            <div class="exp-action go">开始实验</div>
+          </div>
+          <div v-if="searchResults.length === 0" class="empty-history">没有匹配的实验，换个关键词试试</div>
+        </div>
+      </template>
+
+      <template v-else-if="view === 'list' && subjectKey !== '__history'">
         <header class="list-header">
           <h1>{{ subjectInfo.label }}实验室</h1>
           <span class="list-count">{{ list.length }} 个实验</span>
         </header>
+        <div class="progress-strip">
+          <span class="progress-label">学习进度：已完成 {{ history.length }} / {{ totalAvailable }} 个实验</span>
+          <div class="progress-bar"><div class="progress-fill" :style="{ width: progressPct + '%' }"></div></div>
+          <span class="progress-pct">{{ progressPct }}%</span>
+        </div>
 
         <div class="list-grid">
           <div
@@ -181,6 +224,60 @@ function onClearHistory(): void {
 .logo-sub {
   font-size: 11px;
   color: #7a8a99;
+}
+
+.search-box {
+  margin-bottom: 8px;
+}
+
+.search-box input {
+  width: 100%;
+  box-sizing: border-box;
+  border: none;
+  border-radius: 8px;
+  background: #28394a;
+  color: #dfe8f0;
+  font-size: 13px;
+  padding: 8px 12px;
+  outline: none;
+}
+
+.search-box input::placeholder {
+  color: #5f7080;
+}
+
+.progress-strip {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 28px 14px;
+}
+
+.progress-label {
+  font-size: 12px;
+  color: #778;
+  white-space: nowrap;
+}
+
+.progress-bar {
+  flex: 1;
+  height: 8px;
+  background: #e4e8ec;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: #3f8f79;
+  border-radius: 4px;
+  transition: width 0.4s;
+}
+
+.progress-pct {
+  font-size: 12px;
+  color: #3f8f79;
+  font-family: Consolas, monospace;
 }
 
 .nav {

@@ -10,6 +10,7 @@ import { RefractionLogic } from './logic/refraction'
 import { AcidBaseLogic, CombustionLogic, PrecipitateLogic, MetalActivityLogic } from './logic/chem'
 import { CellLogic, PhotosynthesisLogic, MicroscopeLogic } from './logic/biology'
 import { TitrationLogic, RlcLogic, UncertaintyLogic, GeneticsLogic, EnzymeLogic } from './logic/college'
+import { CollisionLogic, ShmLogic, BuoyancyLogic, GasLawLogic, EnergyLogic } from './logic/advanced'
 
 /** 实验逻辑注册表：scene.json 的 id -> 逻辑实现 */
 const LOGICS: Record<string, () => ExperimentLogic> = {
@@ -33,7 +34,12 @@ const LOGICS: Record<string, () => ExperimentLogic> = {
   'college.rlc': () => new RlcLogic(),
   'college.uncertainty': () => new UncertaintyLogic(),
   'college.genetics': () => new GeneticsLogic(),
-  'college.enzyme': () => new EnzymeLogic()
+  'college.enzyme': () => new EnzymeLogic(),
+  'physics.collision': () => new CollisionLogic(),
+  'physics.shm': () => new ShmLogic(),
+  'physics.buoyancy': () => new BuoyancyLogic(),
+  'physics.gas_law': () => new GasLawLogic(),
+  'physics.energy': () => new EnergyLogic()
 }
 
 export function getLogic(id: string): ExperimentLogic | null {

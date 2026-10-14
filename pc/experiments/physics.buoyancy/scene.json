@@ -1,0 +1,18 @@
+{
+  "id": "physics.buoyancy",
+  "title": "浮力与物体浮沉",
+  "physics": { "gravity": 9.8 },
+  "camera": { "position": [4, 3.5, 6], "target": [0, 1.2, 0] },
+  "objects": [
+    { "id": "cube", "type": "box", "size": [0.7, 0.7, 0.7], "position": [0, 2.6, 0], "mass": 0.2, "color": "#c8a060", "friction": 0.1, "restitution": 0.05 }
+  ],
+  "params": [
+    { "id": "density", "label": "物块密度", "min": 200, "max": 1200, "step": 50, "value": 600, "unit": "kg/m³" }
+  ],
+  "records": [
+    { "id": "t", "label": "t (s)", "digits": 2 },
+    { "id": "h", "label": "吃水深度 (m)", "digits": 3 }
+  ],
+  "curve": { "x": "t", "y": "h", "title": "吃水深度 – 时间（振动后趋于平衡）" },
+  "guide": "阿基米德原理：F浮 = ρ水·g·V排。物块落入水箱后上下振动最终平衡：ρ物 < ρ水 漂浮（V排/V物 = ρ物/ρ水，如 600/1000 = 0.6，即 60% 体积浸入）；ρ物 > ρ水 下沉（如铁块）；ρ物 = ρ水 悬浮。轮船正是用空心结构降低平均密度实现漂浮。"
+}

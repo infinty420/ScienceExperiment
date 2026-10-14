@@ -1,0 +1,25 @@
+{
+  "id": "physics.collision",
+  "title": "动量守恒碰撞",
+  "physics": { "gravity": 0 },
+  "camera": { "position": [0, 3, 10], "target": [0, 0.5, 0] },
+  "ground": { "size": 24 },
+  "objects": [
+    { "id": "ball1", "type": "sphere", "size": [0.4], "position": [-3, 0.42, 0], "mass": 1, "color": "#d05a5a", "friction": 0, "restitution": 1 },
+    { "id": "ball2", "type": "sphere", "size": [0.4], "position": [3, 0.42, 0], "mass": 2, "color": "#4a7dc0", "friction": 0, "restitution": 1 }
+  ],
+  "params": [
+    { "id": "m1", "label": "质量 m₁", "min": 0.5, "max": 5, "step": 0.5, "value": 1, "unit": "kg" },
+    { "id": "m2", "label": "质量 m₂", "min": 0.5, "max": 5, "step": 0.5, "value": 2, "unit": "kg" },
+    { "id": "v1", "label": "初速 v₁", "min": 1, "max": 6, "step": 0.5, "value": 3, "unit": "m/s" },
+    { "id": "v2", "label": "初速 v₂（相向）", "min": 0, "max": 4, "step": 0.5, "value": 1, "unit": "m/s" },
+    { "id": "e", "label": "恢复系数 e（1 弹性 / 0 完全非弹性）", "min": 0, "max": 1, "step": 0.1, "value": 1 }
+  ],
+  "records": [
+    { "id": "t", "label": "t (s)", "digits": 2 },
+    { "id": "p", "label": "总动量 (kg·m/s)", "digits": 3 },
+    { "id": "Ek", "label": "总动能 (J)", "digits": 3 }
+  ],
+  "curve": { "x": "t", "y": "p", "title": "总动量 – 时间（任何碰撞下均为水平线）" },
+  "guide": "两球在光滑导轨上相向运动。碰撞过程中系统内力远大于外力，总动量始终守恒（曲线为水平线）；恢复系数 e = 1 时动能也守恒（弹性碰撞），e < 1 时部分动能转化为内能（非弹性碰撞）。改变质量比与恢复系数，观察碰后速度分配。"
+}

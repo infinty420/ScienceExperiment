@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue'
+import { onMounted, onUnmounted, ref, computed } from 'vue'
 import * as THREE from 'three'
 import { Engine } from '../engine/core'
 import { getSceneDef, buildExperiment } from '../experiments/loader'
@@ -198,11 +198,44 @@ ${def?.guide ? `<h2>五、实验原理</h2><p style="line-height:1.8;color:#555"
   URL.revokeObjectURL(url)
 }
 
-/** W9：本地 AI 助教（检索式知识库） */
+/** 导出数据 CSV */
+function exportCsv(): void {
+  const head = columns.value.map((c) => c.label).join(',')
+  const body = rows.value.map((r) => r.join(',')).join('\n')
+  const csv = '\ufeff' + head + '\n' + body
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `数据_${props.title}.csv`
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
+/** W9：本地 AI 助教（检索式知识库 + 分步引导） */
 const aiOpen = ref(false)
 const aiQuestion = ref('')
 const aiAnswer = ref('')
 const aiHit = ref(false)
+const aiTab = ref<'qa' | 'steps'>('qa')
+
+const guideSteps = computed(() => {
+  const def = getSceneDef(props.experimentId)
+  const fromGuide = (def?.guide ?? '')
+    .split(/[。；]/)
+    .map((s) => s.trim())
+    .filter((s) => s.length > 4)
+    .slice(0, 6)
+    .map((s, i) => `${i + 3}. ${s}`)
+  return [
+    '1. 明确实验目的与原理（见下方"实验说明"）',
+    '2. 拖动参数滑杆设置实验条件',
+    ...fromGuide,
+    `${(fromGuide.length ?? 0) + 3}. 点击「开始」运行并观察 3D 现象与曲线`,
+    `${(fromGuide.length ?? 0) + 4}. 记录多组数据（改变参数重复实验），可用「线性拟合」分析`,
+    `${(fromGuide.length ?? 0) + 5}. 完成后「导出报告」生成实验报告`
+  ]
+})
 
 function askAi(): void {
   const hit = searchFaq(props.experimentId, aiQuestion.value.trim())
@@ -222,6 +255,7 @@ function askAi(): void {
       <button class="back" @click="emit('back')">‹ 返回</button>
       <span class="title">{{ title }}</span>
       <button class="tool-btn" @click="exportReport">导出报告</button>
+      <button class="tool-btn" @click="exportCsv" v-if="columns.length">导出 CSV</button>
       <button class="tool-btn" @click="aiOpen = true">AI 助教</button>
       <span class="fps" :class="{ ok: fps > 0 }">{{ fps > 0 ? `${fps} FPS` : '…' }}</span>
     </div>
@@ -233,13 +267,22 @@ function askAi(): void {
           <span>AI 助教 · 本地知识库（离线）</span>
           <button class="ai-close" @click="aiOpen = false">✕</button>
         </div>
-        <div class="ai-body">
+        <div class="ai-tabs">
+          <button :class="{ tab: true, on: aiTab === 'qa' }" @click="aiTab = 'qa'">答疑</button>
+          <button :class="{ tab: true, on: aiTab === 'steps' }" @click="aiTab = 'steps'">实验步骤</button>
+        </div>
+        <div class="ai-body" v-if="aiTab === 'qa'">
           <div class="ai-ask">
             <input v-model="aiQuestion" placeholder="例如：为什么实测值有误差？" @keyup.enter="askAi" />
             <button class="btn primary" @click="askAi">提问</button>
           </div>
           <div class="ai-answer" v-if="aiAnswer" :class="{ miss: !aiHit }">{{ aiAnswer }}</div>
           <div class="ai-tip" v-else>可尝试：误差原因 / 怎么调视角 / 数据怎么导出，以及本实验专属问题</div>
+        </div>
+        <div class="ai-body" v-else>
+          <ol class="steps-list">
+            <li v-for="(s, i) in guideSteps" :key="i">{{ s }}</li>
+          </ol>
         </div>
       </div>
     </div>
@@ -386,6 +429,33 @@ function askAi(): void {
   background: none;
   color: #fff;
   font-size: 14px;
+}
+
+.ai-tabs {
+  display: flex;
+  border-bottom: 1px solid #eef1f4;
+}
+
+.ai-tabs .tab {
+  flex: 1;
+  background: none;
+  font-size: 13px;
+  color: #889;
+  padding: 10px 0;
+  border-bottom: 2px solid transparent;
+}
+
+.ai-tabs .tab.on {
+  color: #3f8f79;
+  border-bottom-color: #3f8f79;
+  font-weight: 500;
+}
+
+.steps-list {
+  padding-left: 20px;
+  font-size: 13px;
+  color: #445;
+  line-height: 2.1;
 }
 
 .ai-body {

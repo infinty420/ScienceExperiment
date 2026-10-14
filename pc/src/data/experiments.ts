@@ -36,6 +36,12 @@ export const EXPERIMENTS: ExperimentInfo[] = [
   { id: 'physics.lens', title: '凸透镜成像规律', subject: 'physics', subjectLabel: '物理', difficulty: 1, wave: 'W3', available: true },
   { id: 'physics.refraction', title: '光的折射与全反射', subject: 'physics', subjectLabel: '物理', difficulty: 2, wave: 'W3', available: true },
   { id: 'physics.ohm_law', title: '欧姆定律验证', subject: 'physics', subjectLabel: '物理', difficulty: 1, wave: 'W3', available: true },
+  // 物理 U1 进阶
+  { id: 'physics.collision', title: '动量守恒碰撞', subject: 'physics', subjectLabel: '物理', difficulty: 2, wave: 'U1', available: true },
+  { id: 'physics.shm', title: '简谐振动（弹簧振子）', subject: 'physics', subjectLabel: '物理', difficulty: 2, wave: 'U1', available: true },
+  { id: 'physics.buoyancy', title: '浮力与物体浮沉', subject: 'physics', subjectLabel: '物理', difficulty: 1, wave: 'U1', available: true },
+  { id: 'physics.gas_law', title: '气体定律（活塞气缸）', subject: 'physics', subjectLabel: '物理', difficulty: 2, wave: 'U1', available: true },
+  { id: 'physics.energy', title: '机械能守恒（竖直上抛）', subject: 'physics', subjectLabel: '物理', difficulty: 2, wave: 'U1', available: true },
   // 化学 W4
   { id: 'chemistry.acid_base', title: '酸碱中和滴定', subject: 'chemistry', subjectLabel: '化学', difficulty: 1, wave: 'W4', available: true },
   { id: 'chemistry.combustion', title: '燃烧条件探究', subject: 'chemistry', subjectLabel: '化学', difficulty: 1, wave: 'W4', available: true },

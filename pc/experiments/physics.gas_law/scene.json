@@ -1,0 +1,16 @@
+{
+  "id": "physics.gas_law",
+  "title": "气体定律（活塞气缸）",
+  "camera": { "position": [3.5, 2.5, 6], "target": [0, 1.7, 0] },
+  "objects": [],
+  "params": [
+    { "id": "T", "label": "温度 T", "min": 200, "max": 600, "step": 10, "value": 300, "unit": "K" },
+    { "id": "weights", "label": "砝码个数（决定压强）", "min": 1, "max": 5, "step": 1, "value": 2 }
+  ],
+  "records": [
+    { "id": "V", "label": "V (任意单位)", "digits": 2 },
+    { "id": "P", "label": "P (任意单位)", "digits": 2 }
+  ],
+  "curve": { "x": "V", "y": "P", "title": "P – V 图（同一温度下为反比双曲线）" },
+  "guide": "活塞气缸内封闭一定质量理想气体。加砝码增大压强、升温使分子运动加快（橙色粒子）。改变参数后点击「开始」记录一组 (P, V)：等温时 P·V = 恒量（玻意耳定律），等压时 V ∝ T（查理定律）。多个数据点连成 P–V 双曲线。"
+}

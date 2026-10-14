@@ -1,0 +1,22 @@
+{
+  "id": "physics.energy",
+  "title": "机械能守恒（竖直上抛）",
+  "physics": { "gravity": 9.8 },
+  "camera": { "position": [6, 8, 10], "target": [0, 5, 0] },
+  "ground": { "size": 16 },
+  "objects": [
+    { "id": "ball", "type": "sphere", "size": [0.3], "position": [0, 0.3, 0], "mass": 1, "color": "#d08a3e", "friction": 0.2, "restitution": 0 }
+  ],
+  "params": [
+    { "id": "v0", "label": "初速度 v₀", "min": 5, "max": 17, "step": 0.5, "value": 12, "unit": "m/s" }
+  ],
+  "records": [
+    { "id": "t", "label": "t (s)", "digits": 2 },
+    { "id": "h", "label": "h (m)", "digits": 2 },
+    { "id": "Ek", "label": "动能 (J)", "digits": 2 },
+    { "id": "Ep", "label": "势能 (J)", "digits": 2 },
+    { "id": "E", "label": "机械能 E", "digits": 2 }
+  ],
+  "curve": { "x": "t", "y": "E", "title": "机械能总量 – 时间（守恒则为水平线）" },
+  "guide": "小球以初速 v₀ 竖直上抛（忽略空气阻力）。上升阶段动能转化为重力势能，最高点动能最小、势能最大；下落过程相反。整个过程中 Ek + Ep = 恒量（机械能守恒定律），曲线图中 E 为水平线。最大高度 h = v₀²/2g。"
+}

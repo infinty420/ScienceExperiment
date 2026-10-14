@@ -1,0 +1,20 @@
+{
+  "id": "physics.shm",
+  "title": "简谐振动（弹簧振子）",
+  "camera": { "position": [0, 1.2, 8], "target": [0, 0.7, 0] },
+  "objects": [
+    { "id": "ball", "type": "sphere", "size": [0.3], "position": [1, 0.7, 0], "color": "#3f8f79", "noPhysics": true }
+  ],
+  "params": [
+    { "id": "k", "label": "劲度系数 k", "min": 5, "max": 50, "step": 1, "value": 20, "unit": "N/m" },
+    { "id": "m", "label": "振子质量 m", "min": 0.2, "max": 3, "step": 0.1, "value": 1, "unit": "kg" },
+    { "id": "A", "label": "振幅 A", "min": 0.3, "max": 1.6, "step": 0.1, "value": 1, "unit": "m" }
+  ],
+  "records": [
+    { "id": "t", "label": "t (s)", "digits": 2 },
+    { "id": "x", "label": "x (m)", "digits": 3 },
+    { "id": "v", "label": "v (m/s)", "digits": 3 }
+  ],
+  "curve": { "x": "t", "y": "x", "title": "x – t 图像（正弦曲线）" },
+  "guide": "弹簧振子做简谐运动：恢复力 F = −kx，加速度 a = −(k/m)x。位移随时间按正弦规律变化，周期 T = 2π√(m/k) 与振幅无关（等时性）。自动测量 3 个周期后给出实测与理论对比。注意 x-t 是正弦、v-t 是余弦（相差 π/2）。"
+}

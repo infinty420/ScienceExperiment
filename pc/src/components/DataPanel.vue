@@ -13,6 +13,27 @@ const props = defineProps<{
 }>()
 
 const canvasRef = ref<HTMLCanvasElement | null>(null)
+const fitEnabled = ref(false)
+const fitInfo = ref<string | null>(null)
+
+/** 最小二乘线性拟合 */
+function linearFit(pts: Array<[number, number]>): { a: number; b: number; r2: number } | null {
+  const n = pts.length
+  if (n < 3) return null
+  let sx = 0, sy = 0, sxx = 0, sxy = 0, syy = 0
+  for (const [x, y] of pts) {
+    sx += x; sy += y; sxx += x * x; sxy += x * y; syy += y * y
+  }
+  const d = n * sxx - sx * sx
+  if (Math.abs(d) < 1e-12) return null
+  const a = (n * sxy - sx * sy) / d
+  const b = (sy - a * sx) / n
+  const ym = sy / n
+  const ssTot = syy - n * ym * ym
+  const ssRes = pts.reduce((s, [x, y]) => s + (y - (a * x + b)) ** 2, 0)
+  const r2 = ssTot > 1e-12 ? 1 - ssRes / ssTot : 1
+  return { a, b, r2 }
+}
 
 function fmt(v: number, digits?: number): string {
   const d = digits ?? 2
@@ -131,6 +152,32 @@ function draw(): void {
     }
   }
 
+  // 拟合线（红色虚线，覆盖数据 x 范围）
+  if (fitEnabled.value) {
+    const pts = props.rows
+      .filter((r) => xi < r.length && yi < r.length)
+      .map((r) => [r[xi], r[yi]] as [number, number])
+    const fit = linearFit(pts)
+    if (fit) {
+      fitInfo.value = `y = ${fit.a.toFixed(4)}·x ${fit.b >= 0 ? '+' : '−'} ${Math.abs(fit.b).toFixed(4)}    R² = ${fit.r2.toFixed(4)}`
+      const x1 = minX
+      const x2 = maxX
+      ctx.strokeStyle = '#d04545'
+      ctx.lineWidth = 1.5
+      ctx.setLineDash([6, 4])
+      ctx.beginPath()
+      ctx.moveTo(X(x1), Y(fit.a * x1 + fit.b))
+      ctx.lineTo(X(x2), Y(fit.a * x2 + fit.b))
+      ctx.stroke()
+      ctx.setLineDash([])
+      ctx.fillStyle = '#d04545'
+      ctx.font = '11px monospace'
+      ctx.fillText(fitInfo.value, pad.l + 6, pad.t + ph - 8)
+    } else {
+      fitInfo.value = '数据不足（≥3 点）'
+    }
+  }
+
   // 标题与图例
   ctx.fillStyle = '#333'
   ctx.font = '12px sans-serif'
@@ -164,6 +211,12 @@ defineExpose({ redraw: draw })
 
 <template>
   <div class="data-panel">
+    <div class="panel-head" v-if="curve">
+      <span class="fit-status" v-if="fitEnabled && fitInfo">{{ fitInfo }}</span>
+      <button class="fit-btn" :class="{ on: fitEnabled }" @click="fitEnabled = !fitEnabled; draw()">
+        线性拟合 {{ fitEnabled ? '✓' : '' }}
+      </button>
+    </div>
     <div class="table-wrap" v-if="columns.length > 0">
       <table>
         <thead>
@@ -189,6 +242,39 @@ defineExpose({ redraw: draw })
   flex-direction: column;
   gap: 8px;
   min-height: 0;
+}
+
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.panel-title {
+  font-size: 12px;
+  color: #889;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.fit-status {
+  font-size: 10px;
+  font-family: Consolas, monospace;
+  color: #d04545;
+}
+
+.fit-btn {
+  font-size: 11px;
+  padding: 3px 10px;
+  background: #eef1f4;
+  color: #556;
+  border-radius: 4px;
+}
+
+.fit-btn.on {
+  background: #d04545;
+  color: #fff;
 }
 
 .table-wrap {
