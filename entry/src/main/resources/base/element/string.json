@@ -1,0 +1,16 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "智实验：理科 3D 虚拟实验室"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "物理/化学/生物/大学实验的 3D 模拟实验平台"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "智实验"
+    }
+  ]
+}

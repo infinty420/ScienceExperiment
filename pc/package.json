@@ -1,0 +1,23 @@
+{
+  "name": "scilab-pc",
+  "private": true,
+  "version": "0.1.0",
+  "description": "智实验 SciLab - 理科 3D 虚拟实验室（PC 版）",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "tauri": "tauri"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2.1.0",
+    "vue": "^3.4.38"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.1.0",
+    "@vitejs/plugin-vue": "^5.1.2",
+    "typescript": "^5.5.4",
+    "vite": "^5.4.2"
+  }
+}

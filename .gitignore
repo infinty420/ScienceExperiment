@@ -1,0 +1,24 @@
+/node_modules
+/oh_modules
+/local.properties
+/.idea
+**/build
+/.hvigor
+.cxx
+/.clangd
+/.clang-format
+/.clang-tidy
+**/.test
+/.appanalyzer
+
+# PC / Tauri
+pc/node_modules/
+pc/dist/
+pc/src-tauri/target/
+
+# WorkBuddy 项目数据
+.workbuddy/
+
+# OS
+.DS_Store
+*.log

@@ -1,0 +1,19 @@
+[package]
+name = "scilab-pc"
+version = "0.1.0"
+description = "智实验 SciLab - 理科 3D 虚拟实验室（PC 版）"
+authors = ["infinty"]
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-opener = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[lib]
+name = "scilab_pc_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
