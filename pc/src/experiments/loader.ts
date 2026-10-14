@@ -4,7 +4,7 @@
 import * as THREE from 'three'
 import type { Engine } from '../engine/core'
 import { PhysicsWorld } from '../engine/physics'
-import type { SceneDef, ExperimentContext, ExperimentLogic } from './types'
+import type { SceneDef, ExperimentContext, ExperimentLogic, QuizDef } from './types'
 import { getLogic } from './registry'
 
 const modules = import.meta.glob('../../experiments/*/scene.json', {
@@ -15,6 +15,22 @@ const modules = import.meta.glob('../../experiments/*/scene.json', {
 const SCENES: Map<string, SceneDef> = new Map()
 for (const def of Object.values(modules)) {
   SCENES.set(def.id, def)
+}
+
+/** V2 题库：experiments/<id>/quiz.json（可选） */
+const quizModules = import.meta.glob('../../experiments/*/quiz.json', {
+  eager: true,
+  import: 'default'
+}) as Record<string, QuizDef>
+
+const QUIZZES: Map<string, QuizDef> = new Map()
+for (const [path, quiz] of Object.entries(quizModules)) {
+  const m = path.match(/experiments\/([^/]+)\/quiz\.json$/)
+  if (m) QUIZZES.set(m[1], quiz)
+}
+
+export function getQuiz(id: string): QuizDef | undefined {
+  return QUIZZES.get(id)
 }
 
 export function getSceneDef(id: string): SceneDef | undefined {

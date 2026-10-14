@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onUnmounted } from 'vue'
 import { SUBJECTS, EXPERIMENTS, experimentsOf, difficultyLabel, type ExperimentInfo } from './data/experiments'
 import { getHistory, clearHistory, type HistoryEntry } from './store/history'
 import ExperimentStage from './components/ExperimentStage.vue'
+import CompareChart, { type CompareSet } from './components/CompareChart.vue'
 
-type View = 'list' | 'stage'
+type View = 'list' | 'stage' | 'compare'
 
 const EXPERIMENTS_DEMO: ExperimentInfo = EXPERIMENTS.find((e) => e.id === 'w1.demo')!
 
@@ -49,6 +50,43 @@ function onClearHistory(): void {
   clearHistory()
   history.value = []
 }
+
+/* ───── V2：对照实验模式（T3） ───── */
+const availableExps = computed(() => EXPERIMENTS.filter((e) => e.available))
+const compareAId = ref('physics.inclined_plane')
+const compareBId = ref('physics.free_fall')
+const stageARef = ref<InstanceType<typeof ExperimentStage> | null>(null)
+const stageBRef = ref<InstanceType<typeof ExperimentStage> | null>(null)
+const setA = ref<CompareSet | null>(null)
+const setB = ref<CompareSet | null>(null)
+
+const compareAInfo = computed(() => availableExps.value.find((e) => e.id === compareAId.value))
+const compareBInfo = computed(() => availableExps.value.find((e) => e.id === compareBId.value))
+
+let compareTimer: ReturnType<typeof setInterval> | null = null
+function refreshCompare(): void {
+  const a = stageARef.value?.getSnapshot()
+  const b = stageBRef.value?.getSnapshot()
+  if (a && a.rows.length > 0) setA.value = a as CompareSet
+  if (b && b.rows.length > 0) setB.value = b as CompareSet
+}
+
+function openCompare(): void {
+  view.value = 'compare'
+  setA.value = null
+  setB.value = null
+  compareTimer = setInterval(refreshCompare, 800)
+}
+
+function closeCompare(): void {
+  if (compareTimer) clearInterval(compareTimer)
+  compareTimer = null
+  view.value = 'list'
+}
+
+onUnmounted(() => {
+  if (compareTimer) clearInterval(compareTimer)
+})
 </script>
 
 <template>
@@ -81,6 +119,10 @@ function onClearHistory(): void {
           <span class="nav-icon">▶</span>
           <span>W1 渲染验证</span>
         </div>
+        <div class="nav-item" :class="{ active: view === 'compare' }" @click="openCompare">
+          <span class="nav-icon">⇄</span>
+          <span>对照实验</span>
+        </div>
         <div
           class="nav-item"
           :class="{ active: view === 'list' && subjectKey === '__history' }"
@@ -91,7 +133,7 @@ function onClearHistory(): void {
         </div>
       </nav>
 
-      <div class="sidebar-footer">v0.7 · 21 个实验 · 全程离线</div>
+      <div class="sidebar-footer">v2.0 · 26 个实验 · 全程离线</div>
     </aside>
 
     <!-- 主区域 -->
@@ -153,6 +195,56 @@ function onClearHistory(): void {
 
       <template v-else-if="view === 'stage' && current">
         <ExperimentStage :experiment-id="current.id" :title="current.title" @back="backToList" />
+      </template>
+
+      <template v-else-if="view === 'compare'">
+        <div class="compare-view">
+          <header class="compare-head">
+            <button class="compare-back" @click="closeCompare">‹ 返回</button>
+            <h1>对照实验 A / B</h1>
+            <span class="list-count">左右独立调参，曲线同图对比</span>
+          </header>
+          <div class="compare-body">
+            <div class="compare-slot">
+              <div class="compare-select">
+                <span class="slot-tag a">A</span>
+                <select v-model="compareAId">
+                  <option v-for="e in availableExps" :key="e.id" :value="e.id">{{ e.title }}</option>
+                </select>
+              </div>
+              <ExperimentStage
+                v-if="compareAInfo"
+                ref="stageARef"
+                :key="'A' + compareAId"
+                :experiment-id="compareAInfo.id"
+                :title="compareAInfo.title"
+                compact
+                @back="() => {}"
+              />
+            </div>
+            <div class="compare-slot">
+              <div class="compare-select">
+                <span class="slot-tag b">B</span>
+                <select v-model="compareBId">
+                  <option v-for="e in availableExps" :key="e.id" :value="e.id">{{ e.title }}</option>
+                </select>
+              </div>
+              <ExperimentStage
+                v-if="compareBInfo"
+                ref="stageBRef"
+                :key="'B' + compareBId"
+                :experiment-id="compareBInfo.id"
+                :title="compareBInfo.title"
+                compact
+                @back="() => {}"
+              />
+            </div>
+          </div>
+          <div class="compare-chart-wrap">
+            <div class="compare-chart-title">A / B 数据对比（绿 = A，蓝 = B）</div>
+            <CompareChart :set-a="setA" :set-b="setB" />
+          </div>
+        </div>
       </template>
 
       <template v-else-if="subjectKey === '__history'">
@@ -424,5 +516,106 @@ function onClearHistory(): void {
   color: #aaa;
   font-size: 13px;
   padding: 60px 0;
+}
+
+/* 对照实验 */
+.compare-view {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.compare-head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 14px 20px 8px;
+}
+
+.compare-head h1 {
+  font-size: 18px;
+}
+
+.compare-back {
+  background: none;
+  font-size: 15px;
+  color: #666;
+  padding: 4px 8px;
+}
+
+.compare-body {
+  flex: 1;
+  display: flex;
+  gap: 10px;
+  padding: 0 12px;
+  min-height: 0;
+}
+
+.compare-slot {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border: 1px solid #e2e6ea;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.compare-select {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-bottom: 1px solid #eef1f4;
+  background: #fafbfc;
+}
+
+.compare-select select {
+  flex: 1;
+  font-size: 13px;
+  padding: 4px 8px;
+  border: 1px solid #d8dde2;
+  border-radius: 6px;
+  background: #fff;
+}
+
+.slot-tag {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.slot-tag.a {
+  background: #3f8f79;
+}
+
+.slot-tag.b {
+  background: #3e6fb0;
+}
+
+.compare-chart-wrap {
+  padding: 8px 16px 14px;
+}
+
+.compare-chart-title {
+  font-size: 12px;
+  color: #778;
+  margin-bottom: 6px;
+}
+
+.compare-chart-wrap :deep(canvas) {
+  width: 100%;
+  height: 200px;
+  border: 1px solid #e2e6ea;
+  border-radius: 8px;
+  background: #fff;
 }
 </style>

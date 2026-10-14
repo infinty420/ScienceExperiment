@@ -17,6 +17,12 @@ export class Engine {
   running = true
   fps = 0
   onPost: PostFn | null = null
+  /** V2：时间流速（0.1–10），物理/逻辑步长统一缩放 */
+  timeScale = 1
+  /** V2：暂停态（updatables 收到 dt=0，相机交互仍可用） */
+  paused = false
+  /** V2：每帧回调（录制器用，参数为缩放后的 dt） */
+  onFrame: ((dt: number) => void) | null = null
   /** 每次渲染后回调（用于 UI 刷新数据） */
   private _fpsFrames = 0
   private _fpsTime = 0
@@ -150,12 +156,20 @@ export class Engine {
     this.camera.updateProjectionMatrix()
   }
 
+  /** V2：单步推进（暂停态有效）：以当前流速步进 1/120s 并渲染 */
+  stepOnce(): void {
+    if (!this.paused) return
+    const dt = (1 / 120) * this.timeScale
+    for (const fn of this.updatables) fn(dt)
+    this.renderer.render(this.scene, this.camera)
+  }
+
   private _loop(): void {
     requestAnimationFrame(this._loop)
-    const dt = Math.min(this.clock.getDelta(), 0.05)
+    const rawDt = Math.min(this.clock.getDelta(), 0.05)
 
     this._fpsFrames++
-    this._fpsTime += dt
+    this._fpsTime += rawDt
     if (this._fpsTime >= 1.0) {
       this.fps = Math.round(this._fpsFrames / this._fpsTime)
       this._fpsFrames = 0
@@ -163,6 +177,8 @@ export class Engine {
       this.onPost?.('fps', { fps: this.fps })
     }
 
+    const dt = this.paused ? 0 : rawDt * this.timeScale
+    if (dt > 0) this.onFrame?.(dt)
     for (const fn of this.updatables) fn(dt)
     this.renderer.render(this.scene, this.camera)
   }

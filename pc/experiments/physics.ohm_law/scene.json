@@ -1,16 +1,85 @@
 {
   "id": "physics.ohm_law",
   "title": "欧姆定律验证",
-  "camera": { "position": [0, 1, 6.5], "target": [0, 1, 0] },
+  "camera": {
+    "position": [
+      0,
+      1,
+      6.5
+    ],
+    "target": [
+      0,
+      1,
+      0
+    ]
+  },
   "objects": [],
   "params": [
-    { "id": "voltage", "label": "电源电压", "min": 1, "max": 12, "step": 0.5, "value": 3, "unit": "V" },
-    { "id": "resistance", "label": "定值电阻", "min": 5, "max": 100, "step": 5, "value": 20, "unit": "Ω" }
+    {
+      "id": "voltage",
+      "label": "电源电压",
+      "min": 1,
+      "max": 12,
+      "step": 0.5,
+      "value": 3,
+      "unit": "V"
+    },
+    {
+      "id": "resistance",
+      "label": "定值电阻",
+      "min": 5,
+      "max": 100,
+      "step": 5,
+      "value": 20,
+      "unit": "Ω"
+    }
   ],
   "records": [
-    { "id": "U", "label": "U (V)", "digits": 1 },
-    { "id": "I", "label": "I (A)", "digits": 3 }
+    {
+      "id": "U",
+      "label": "U (V)",
+      "digits": 1
+    },
+    {
+      "id": "I",
+      "label": "I (A)",
+      "digits": 3,
+      "sigma": 0.005
+    }
   ],
-  "curve": { "x": "U", "y": "I", "title": "I – U 图（R 不变时应为过原点直线）" },
-  "guide": "保持电阻 R 不变，改变电压 U，每次点击「开始」记录一组 (U, I) 数据。多次记录后 I–U 图应为过原点的直线，斜率 = 1/R —— 这就是欧姆定律 I = U/R。"
+  "curve": {
+    "x": "U",
+    "y": "I",
+    "title": "I – U 图（R 不变时应为过原点直线）"
+  },
+  "guide": "保持电阻 R 不变，改变电压 U，每次点击「开始」记录一组 (U, I) 数据。多次记录后 I–U 图应为过原点的直线，斜率 = 1/R —— 这就是欧姆定律 I = U/R。",
+  "instruments": [
+    {
+      "id": "am",
+      "type": "ammeter",
+      "label": "电流表",
+      "unit": "A",
+      "digits": 3,
+      "range": [
+        0,
+        3
+      ],
+      "recordColumn": "I"
+    }
+  ],
+  "exam": {
+    "timeLimitSec": 480,
+    "goals": [
+      {
+        "minRecords": 5,
+        "weight": 50
+      }
+    ],
+    "checklist": [
+      "电源电压",
+      "定值电阻",
+      "开始实验",
+      "仪器读数"
+    ]
+  }
 }

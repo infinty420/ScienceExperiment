@@ -1,5 +1,6 @@
 /**
  * 实验历史存储（W8）：localStorage 持久化。
+ * V2：增加考核模式标记与得分。
  * W11 云同步时此层替换为「本地队列 + 云端备份」。
  */
 export interface HistoryEntry {
@@ -11,6 +12,10 @@ export interface HistoryEntry {
   paramLabels: Record<string, string>
   resultLines: string[]
   rowCount: number
+  /** V2：practice 练习 / exam 考核 */
+  mode?: 'practice' | 'exam'
+  /** V2：考核得分（0–100） */
+  score?: number
 }
 
 const KEY = 'scilab.history.v1'
@@ -24,9 +29,11 @@ export function getHistory(): HistoryEntry[] {
   }
 }
 
-/** 同一实验重复完成则覆盖（保留最新成绩） */
+/** 考核成绩独立保存（不覆盖练习记录）；练习成绩同实验覆盖保留最新 */
 export function saveHistory(entry: HistoryEntry): void {
-  const list = getHistory().filter((e) => e.experimentId !== entry.experimentId)
+  const list = getHistory().filter(
+    (e) => !(e.experimentId === entry.experimentId && (e.mode ?? 'practice') === (entry.mode ?? 'practice'))
+  )
   list.unshift(entry)
   try {
     localStorage.setItem(KEY, JSON.stringify(list.slice(0, 100)))

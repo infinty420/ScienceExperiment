@@ -12,6 +12,10 @@ const props = defineProps<{
   theory?: { points: Array<[number, number]>; label: string } | null
 }>()
 
+const emit = defineEmits<{
+  (e: 'fit', r2: number): void
+}>()
+
 const canvasRef = ref<HTMLCanvasElement | null>(null)
 const fitEnabled = ref(false)
 const fitInfo = ref<string | null>(null)
@@ -142,10 +146,19 @@ function draw(): void {
     ctx.stroke()
   }
 
-  // 实测散点
-  ctx.fillStyle = '#3f8f79'
+  // 实测散点 + 误差棒（V2：该列声明了 sigma 时绘制 ±σ 竖线）
+  const ySigma = props.columns[yi]?.sigma ?? 0
   for (const r of props.rows) {
     if (xi < r.length && yi < r.length) {
+      if (ySigma > 0) {
+        ctx.strokeStyle = 'rgba(63, 143, 121, 0.5)'
+        ctx.lineWidth = 1
+        ctx.beginPath()
+        ctx.moveTo(X(r[xi]), Y(r[yi] - ySigma))
+        ctx.lineTo(X(r[xi]), Y(r[yi] + ySigma))
+        ctx.stroke()
+      }
+      ctx.fillStyle = '#3f8f79'
       ctx.beginPath()
       ctx.arc(X(r[xi]), Y(r[yi]), 2.5, 0, Math.PI * 2)
       ctx.fill()
@@ -160,6 +173,7 @@ function draw(): void {
     const fit = linearFit(pts)
     if (fit) {
       fitInfo.value = `y = ${fit.a.toFixed(4)}·x ${fit.b >= 0 ? '+' : '−'} ${Math.abs(fit.b).toFixed(4)}    R² = ${fit.r2.toFixed(4)}`
+      emit('fit', fit.r2)
       const x1 = minX
       const x2 = maxX
       ctx.strokeStyle = '#d04545'
@@ -206,7 +220,7 @@ function draw(): void {
 
 watch(() => [props.rows, props.theory], () => draw(), { deep: true })
 onMounted(() => draw())
-defineExpose({ redraw: draw })
+defineExpose({ redraw: draw, fitResult: fitInfo })
 </script>
 
 <template>

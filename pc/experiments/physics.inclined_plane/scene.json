@@ -1,15 +1,38 @@
 {
   "id": "physics.inclined_plane",
   "title": "斜面上物体运动探究",
-  "physics": { "gravity": 9.8 },
-  "camera": { "position": [8, 5, 10], "target": [0, 1.5, 0] },
-  "ground": { "size": 24 },
+  "physics": {
+    "gravity": 9.8
+  },
+  "camera": {
+    "position": [
+      8,
+      5,
+      10
+    ],
+    "target": [
+      0,
+      1.5,
+      0
+    ]
+  },
+  "ground": {
+    "size": 24
+  },
   "objects": [
     {
       "id": "ramp",
       "type": "box",
-      "size": [8, 0.3, 3],
-      "position": [0, 1.5, 0],
+      "size": [
+        8,
+        0.3,
+        3
+      ],
+      "position": [
+        0,
+        1.5,
+        0
+      ],
       "static": true,
       "color": "#5a7a9a",
       "friction": 0.316
@@ -17,8 +40,16 @@
     {
       "id": "block",
       "type": "box",
-      "size": [0.7, 0.7, 0.7],
-      "position": [3, 3, 0],
+      "size": [
+        0.7,
+        0.7,
+        0.7
+      ],
+      "position": [
+        3,
+        3,
+        0
+      ],
       "mass": 1,
       "color": "#3f8f79",
       "friction": 0.316,
@@ -26,15 +57,80 @@
     }
   ],
   "params": [
-    { "id": "angle", "label": "倾角", "min": 5, "max": 45, "step": 1, "value": 25, "unit": "°" },
-    { "id": "mass", "label": "滑块质量", "min": 0.5, "max": 5, "step": 0.1, "value": 1, "unit": "kg" },
-    { "id": "friction", "label": "摩擦系数", "min": 0, "max": 0.8, "step": 0.05, "value": 0.1 }
+    {
+      "id": "angle",
+      "label": "倾角",
+      "min": 5,
+      "max": 45,
+      "step": 1,
+      "value": 25,
+      "unit": "°"
+    },
+    {
+      "id": "mass",
+      "label": "滑块质量",
+      "min": 0.5,
+      "max": 5,
+      "step": 0.1,
+      "value": 1,
+      "unit": "kg"
+    },
+    {
+      "id": "friction",
+      "label": "摩擦系数",
+      "min": 0,
+      "max": 0.8,
+      "step": 0.05,
+      "value": 0.1
+    }
   ],
   "records": [
-    { "id": "t", "label": "t (s)", "digits": 2 },
-    { "id": "s", "label": "s (m)", "digits": 3 },
-    { "id": "v", "label": "v (m/s)", "digits": 3 }
+    {
+      "id": "t",
+      "label": "t (s)",
+      "digits": 2
+    },
+    {
+      "id": "s",
+      "label": "s (m)",
+      "digits": 3,
+      "sigma": 0.005
+    },
+    {
+      "id": "v",
+      "label": "v (m/s)",
+      "digits": 3
+    }
   ],
-  "curve": { "x": "t", "y": "v", "title": "v – t 图（斜率 = 加速度）" },
-  "guide": "调节倾角、质量与摩擦系数，点击「开始」释放滑块。观察 v–t 图：直线斜率即加速度。理论值 a = g·(sinθ − μ·cosθ)。当 μ ≥ tanθ 时滑块保持静止。"
+  "curve": {
+    "x": "t",
+    "y": "v",
+    "title": "v – t 图（斜率 = 加速度）"
+  },
+  "guide": "调节倾角、质量与摩擦系数，点击「开始」释放滑块。观察 v–t 图：直线斜率即加速度。理论值 a = g·(sinθ − μ·cosθ)。当 μ ≥ tanθ 时滑块保持静止。",
+  "instruments": [
+    {
+      "id": "ruler",
+      "type": "ruler",
+      "label": "刻度尺",
+      "unit": "m",
+      "digits": 3,
+      "recordColumn": "s"
+    }
+  ],
+  "exam": {
+    "timeLimitSec": 600,
+    "goals": [
+      {
+        "minRecords": 20,
+        "weight": 50
+      }
+    ],
+    "checklist": [
+      "倾角",
+      "摩擦系数",
+      "开始实验",
+      "仪器读数"
+    ]
+  }
 }

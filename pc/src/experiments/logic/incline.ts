@@ -119,6 +119,8 @@ export class InclineLogic implements ExperimentLogic {
     if (this.sampleAcc >= 0.05) {
       this.sampleAcc = 0
       this.ctx.post('data', { row: [+this.t.toFixed(2), +s.toFixed(3), +v.toFixed(3)] })
+      // V2：刻度尺仪器真值（位移）
+      this.ctx.post('measure', { values: { s: +s.toFixed(3) } })
     }
 
     if (s >= this.L - 1.6 || this.t > 20) {
