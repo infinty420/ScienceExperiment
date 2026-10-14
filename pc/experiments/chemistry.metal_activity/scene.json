@@ -1,0 +1,12 @@
+{
+  "id": "chemistry.metal_activity",
+  "title": "金属活动性顺序",
+  "camera": { "position": [3.2, 2.8, 4.5], "target": [0, 1.2, 0] },
+  "objects": [],
+  "params": [
+    { "id": "metal", "label": "金属（0=Mg / 1=Zn / 2=Cu）", "min": 0, "max": 2, "step": 1, "value": 1 },
+    { "id": "conc", "label": "盐酸浓度", "min": 0.5, "max": 2, "step": 0.1, "value": 1, "unit": "×" }
+  ],
+  "records": [],
+  "guide": "把金属放入稀盐酸，观察气泡（H₂）产生的剧烈程度：Mg 剧烈、Zn 缓慢、Cu 无反应。金属活动性顺序 K Ca Na Mg Al Zn Fe Sn Pb (H) Cu Hg Ag——排在氢前面的金属能与稀酸反应放出氢气，越靠前越剧烈。"
+}

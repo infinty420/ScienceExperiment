@@ -1,0 +1,12 @@
+{
+  "id": "chemistry.precipitate",
+  "title": "沉淀反应与颜色变化",
+  "camera": { "position": [3.2, 2.8, 4.5], "target": [0, 1.2, 0] },
+  "objects": [],
+  "params": [
+    { "id": "reagent", "label": "反应组（0=AgNO₃+NaCl / 1=CuSO₄+NaOH）", "min": 0, "max": 1, "step": 1, "value": 0 },
+    { "id": "volume", "label": "滴加试剂体积", "min": 0, "max": 20, "step": 1, "value": 10, "unit": "mL" }
+  ],
+  "records": [],
+  "guide": "复分解反应发生条件之一：生成沉淀。AgNO₃ 与 NaCl 反应生成白色的 AgCl 沉淀（检验 Cl⁻ 的特征反应）；CuSO₄ 与 NaOH 反应生成蓝色的 Cu(OH)₂ 絮状沉淀。观察沉淀量随滴加体积的变化。"
+}

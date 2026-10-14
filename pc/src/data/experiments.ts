@@ -37,15 +37,15 @@ export const EXPERIMENTS: ExperimentInfo[] = [
   { id: 'physics.refraction', title: '光的折射与全反射', subject: 'physics', subjectLabel: '物理', difficulty: 2, wave: 'W3', available: true },
   { id: 'physics.ohm_law', title: '欧姆定律验证', subject: 'physics', subjectLabel: '物理', difficulty: 1, wave: 'W3', available: true },
   // 化学 W4
-  { id: 'chemistry.acid_base', title: '酸碱中和滴定（初中）', subject: 'chemistry', subjectLabel: '化学', difficulty: 1, wave: 'W4', available: false },
-  { id: 'chemistry.combustion', title: '燃烧条件探究', subject: 'chemistry', subjectLabel: '化学', difficulty: 1, wave: 'W4', available: false },
-  { id: 'chemistry.precipitate', title: '沉淀反应与颜色变化', subject: 'chemistry', subjectLabel: '化学', difficulty: 2, wave: 'W4', available: false },
-  { id: 'chemistry.metal_activity', title: '金属活动性顺序', subject: 'chemistry', subjectLabel: '化学', difficulty: 1, wave: 'W4', available: false },
+  { id: 'chemistry.acid_base', title: '酸碱中和滴定', subject: 'chemistry', subjectLabel: '化学', difficulty: 1, wave: 'W4', available: true },
+  { id: 'chemistry.combustion', title: '燃烧条件探究', subject: 'chemistry', subjectLabel: '化学', difficulty: 1, wave: 'W4', available: true },
+  { id: 'chemistry.precipitate', title: '沉淀反应与颜色变化', subject: 'chemistry', subjectLabel: '化学', difficulty: 2, wave: 'W4', available: true },
+  { id: 'chemistry.metal_activity', title: '金属活动性顺序', subject: 'chemistry', subjectLabel: '化学', difficulty: 1, wave: 'W4', available: true },
   { id: 'chemistry.gas_prepare', title: '氧气制备与检验', subject: 'chemistry', subjectLabel: '化学', difficulty: 2, wave: 'W4', available: false },
   // 生物 W5
-  { id: 'biology.microscope', title: '显微镜的使用', subject: 'biology', subjectLabel: '生物', difficulty: 1, wave: 'W5', available: false },
-  { id: 'biology.cell', title: '细胞结构 3D 探索', subject: 'biology', subjectLabel: '生物', difficulty: 1, wave: 'W5', available: false },
-  { id: 'biology.photosynthesis', title: '光合作用过程模拟', subject: 'biology', subjectLabel: '生物', difficulty: 2, wave: 'W5', available: false },
+  { id: 'biology.microscope', title: '显微镜的使用', subject: 'biology', subjectLabel: '生物', difficulty: 1, wave: 'W5', available: true },
+  { id: 'biology.cell', title: '细胞结构 3D 探索', subject: 'biology', subjectLabel: '生物', difficulty: 1, wave: 'W5', available: true },
+  { id: 'biology.photosynthesis', title: '光合作用过程模拟', subject: 'biology', subjectLabel: '生物', difficulty: 2, wave: 'W5', available: true },
   // 大学 W7
   { id: 'college.titration', title: '酸碱滴定分析（曲线绘制）', subject: 'college', subjectLabel: '大学实验', difficulty: 2, wave: 'W7', available: false },
   { id: 'college.rlc', title: 'RLC 串联电路谐振', subject: 'college', subjectLabel: '大学实验', difficulty: 3, wave: 'W7', available: false },

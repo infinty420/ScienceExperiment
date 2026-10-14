@@ -1,0 +1,12 @@
+{
+  "id": "biology.microscope",
+  "title": "显微镜的使用",
+  "camera": { "position": [3, 3.2, 4.2], "target": [0, 0.4, 0] },
+  "objects": [],
+  "params": [
+    { "id": "focus", "label": "准焦螺旋", "min": 0, "max": 12, "step": 0.2, "value": 5 },
+    { "id": "objective", "label": "物镜倍数", "min": 4, "max": 40, "step": 1, "value": 10, "unit": "×" }
+  ],
+  "records": [],
+  "guide": "载物台上是洋葱表皮细胞玻片标本。调节「准焦螺旋」滑杆，当读数为 8.0 时视野最清晰；偏离越大图像越模糊。换用高倍物镜时视野变小但细胞更大。显微镜的使用口诀：先低后高、先粗后细。"
+}

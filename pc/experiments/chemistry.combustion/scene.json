@@ -1,0 +1,13 @@
+{
+  "id": "chemistry.combustion",
+  "title": "燃烧条件探究",
+  "camera": { "position": [3.5, 3, 4.5], "target": [0, 1.8, 0] },
+  "objects": [],
+  "params": [
+    { "id": "fuel", "label": "可燃物（木条）", "min": 0, "max": 1, "step": 1, "value": 1 },
+    { "id": "oxygen", "label": "氧气充足", "min": 0, "max": 1, "step": 1, "value": 1 },
+    { "id": "heat", "label": "达到着火点", "min": 0, "max": 1, "step": 1, "value": 1 }
+  ],
+  "records": [],
+  "guide": "燃烧需要同时满足三个条件：①可燃物 ②与氧气（助燃物）接触 ③温度达到着火点。逐一关闭任一开关，火焰立即熄灭。灭火的原理就是破坏三要素中的任意一个：清除可燃物、隔绝氧气、降温至着火点以下。"
+}
