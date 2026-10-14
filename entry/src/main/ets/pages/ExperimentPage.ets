@@ -1,21 +1,17 @@
 import web_webview from '@ohos.web.webview';
 import router from '@ohos.router';
 import { NativeBridgeProxy, BridgeMessage, BridgeSender } from '../bridge/ExperimentBridge';
-import { ExperimentRepository } from '../model/ExperimentData';
 
 /**
- * 3D 实验台：原生工具栏 + WebView 宿主（W1 渲染管线验证版）。
- * W2 起接入实验包加载器，按 experimentId 加载 scene.json。
+ * 3D 实验台（V2 版）：原生标题栏 + WebView 宿主。
+ * WebView 内为完整 Vue 实验台（时间控制/虚拟仪器/考核/题库/AI 助教等 V2 全量能力），
+ * 原生通过 window.__hosBoot(experimentId, title) 注入当前实验。
  */
 @Entry
 @Component
 struct ExperimentPage {
   @State engineReady: boolean = false;
   @State engineStatus: string = '引擎加载中…';
-  @State fpsValue: number = 0;
-  @State spinning: boolean = true;
-  @State wireframe: boolean = false;
-  @State spinSpeed: number = 1.0;
   private experimentId: string = 'w1.demo';
   private experimentTitle: string = '实验台';
   private webController: web_webview.WebviewController = new web_webview.WebviewController();
@@ -34,9 +30,6 @@ struct ExperimentPage {
         this.experimentTitle = rec['title'] as string;
       }
     }
-    if (this.experimentId === 'w1.demo') {
-      this.experimentTitle = 'W1 桥接验证 · 3D 实验台';
-    }
 
     // JS -> 原生 消息分发
     this.nativeBridge.setListener((msg: string) => {
@@ -51,21 +44,9 @@ struct ExperimentPage {
   private handleJsMessage(m: BridgeMessage): void {
     if (m.type === 'engine.ready') {
       this.engineReady = true;
-      const three: Object | undefined = m.payload['three'];
-      this.engineStatus = `引擎就绪 (three r${three !== undefined ? three.toString() : '?'})`;
-      // 页面就绪后同步一次当前控制状态
-      this.send('scene.spin', { 'on': this.spinning });
-      this.send('scene.speed', { 'value': this.spinSpeed });
-    } else if (m.type === 'fps') {
-      const f: Object | undefined = m.payload['fps'];
-      if (f !== undefined) {
-        this.fpsValue = Number(f.toString());
-      }
-    } else if (m.type === 'scene.state') {
-      const speed: Object | undefined = m.payload['speed'];
-      if (speed !== undefined) {
-        this.spinSpeed = Number(speed.toString());
-      }
+      this.engineStatus = 'V2 引擎就绪 · 全功能实验台';
+    } else if (m.type === 'nav.back') {
+      router.back();
     } else if (m.type === 'error') {
       this.engineStatus = `引擎消息错误: ${JSON.stringify(m.payload)}`;
     }
@@ -84,26 +65,17 @@ struct ExperimentPage {
     }
   }
 
-  private toggleSpin(): void {
-    this.spinning = !this.spinning;
-    this.send('scene.spin', { 'on': this.spinning });
-  }
-
-  private toggleWireframe(): void {
-    this.wireframe = !this.wireframe;
-    this.send('scene.wireframe', { 'on': this.wireframe });
-  }
-
-  private resetScene(): void {
-    this.spinning = true;
-    this.wireframe = false;
-    this.spinSpeed = 1.0;
-    this.send('scene.reset', {});
-  }
-
-  private speedChange(value: number): void {
-    this.spinSpeed = value;
-    this.send('scene.speed', { 'value': value });
+  /** 注入当前实验（V2 Web Bundle 的启动接口） */
+  private bootExperiment(): void {
+    const id: string = this.experimentId;
+    const title: string = this.experimentTitle;
+    const script: string =
+      `window.__hosBoot && window.__hosBoot('${id}', '${title}')`;
+    try {
+      this.webController.runJavaScript(script);
+    } catch (e) {
+      console.error(`[bridge] boot error: ${JSON.stringify(e)}`);
+    }
   }
 
   build() {
@@ -125,7 +97,7 @@ struct ExperimentPage {
           .maxLines(1)
           .textOverflow({ overflow: TextOverflow.Ellipsis })
           .margin({ left: 4 })
-        Text(this.engineReady ? `${this.fpsValue} FPS` : '…')
+        Text(this.engineReady ? 'V2' : '…')
           .fontSize(12)
           .fontColor('#3f8f79')
           .margin({ right: 8 })
@@ -135,12 +107,12 @@ struct ExperimentPage {
       .padding({ left: 12, right: 12 })
       .backgroundColor('#f5f6f8')
 
-      // 3D 场景（WebView）
+      // V2 全功能实验台（WebView 全屏承载）
       Column() {
-        Web({ src: $rawfile('web/index.html'), controller: this.webController })
+        Web({ src: $rawfile('web/hos.html'), controller: this.webController })
           .onPageEnd(() => {
             this.pageLoaded = true;
-            this.send('engine.init', { 'experimentId': this.experimentId });
+            this.bootExperiment();
           })
           .javaScriptProxy({
             object: this.nativeBridge,
@@ -156,62 +128,14 @@ struct ExperimentPage {
       .layoutWeight(1)
       .width('100%')
 
-      // 原生工具栏
-      Column({ space: 8 }) {
-        Text(this.engineStatus)
-          .fontSize(11)
-          .fontColor('#999999')
-        Row({ space: 10 }) {
-          Button(this.spinning ? '暂停' : '继续')
-            .fontSize(14)
-            .height(36)
-            .backgroundColor('#3f8f79')
-            .onClick(() => {
-              this.toggleSpin();
-            })
-          Button('重置')
-            .fontSize(14)
-            .height(36)
-            .backgroundColor('#4a6a8a')
-            .onClick(() => {
-              this.resetScene();
-            })
-          Button(this.wireframe ? '实体' : '线框')
-            .fontSize(14)
-            .height(36)
-            .backgroundColor('#8a6a4a')
-            .onClick(() => {
-              this.toggleWireframe();
-            })
-        }
-
-        Row({ space: 8 }) {
-          Text('转速')
-            .fontSize(13)
-            .fontColor('#666666')
-          Slider({
-            value: this.spinSpeed,
-            min: 0,
-            max: 3,
-            step: 0.1
-          })
-            .layoutWeight(1)
-            .onChange((value: number, mode: SliderChangeMode) => {
-              if (mode === SliderChangeMode.End || mode === SliderChangeMode.Click) {
-                this.speedChange(value);
-              }
-            })
-          Text(this.spinSpeed.toFixed(1))
-            .fontSize(13)
-            .fontColor('#3f8f79')
-            .width(30)
-        }
+      // 底部状态条
+      Text(this.engineStatus)
+        .fontSize(10)
+        .fontColor('#999999')
         .width('100%')
-        .padding({ left: 12, right: 12 })
-      }
-      .width('100%')
-      .padding({ top: 8, bottom: 12, left: 12, right: 12 })
-      .backgroundColor('#f5f6f8')
+        .textAlign(TextAlign.Center)
+        .padding({ top: 4, bottom: 6 })
+        .backgroundColor('#f5f6f8')
     }
     .width('100%')
     .height('100%')

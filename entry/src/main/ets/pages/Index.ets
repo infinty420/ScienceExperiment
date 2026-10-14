@@ -108,7 +108,7 @@ struct Index {
         .height(340)
 
         // 版本信息
-        Text('W1 · 框架搭建阶段 · 全程离线')
+        Text('V2 · 26 个实验 · 九大教学模块 · 全程离线')
           .fontSize(11)
           .fontColor('#bbbbbb')
           .margin({ bottom: 20 })
@@ -187,7 +187,7 @@ struct Index {
             .fontSize(15)
             .fontColor('#333333')
             .layoutWeight(1)
-          Text('W8 上线')
+          Text('成绩在实验内考核模式中记录')
             .fontSize(12)
             .fontColor('#bbbbbb')
         }
@@ -201,7 +201,7 @@ struct Index {
             .fontSize(15)
             .fontColor('#333333')
             .layoutWeight(1)
-          Text('W6 上线')
+          Text('实验台内导出 HTML 报告')
             .fontSize(12)
             .fontColor('#bbbbbb')
         }
@@ -215,7 +215,7 @@ struct Index {
             .fontSize(15)
             .fontColor('#333333')
             .layoutWeight(1)
-          Text('W9 上线')
+          Text('实验台内 · 答疑/步骤/诊断')
             .fontSize(12)
             .fontColor('#bbbbbb')
         }
