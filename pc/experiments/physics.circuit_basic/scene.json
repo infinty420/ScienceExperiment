@@ -1,0 +1,17 @@
+{
+  "id": "physics.circuit_basic",
+  "title": "基础电路搭建",
+  "camera": { "position": [0, 1, 6.5], "target": [0, 1, 0] },
+  "objects": [],
+  "params": [
+    { "id": "switch", "label": "开关闭合", "min": 0, "max": 1, "step": 1, "value": 1 },
+    { "id": "voltage", "label": "电源电压", "min": 0, "max": 12, "step": 0.5, "value": 6, "unit": "V" },
+    { "id": "resistance", "label": "滑动变阻器", "min": 5, "max": 50, "step": 1, "value": 20, "unit": "Ω" }
+  ],
+  "records": [
+    { "id": "U", "label": "U (V)", "digits": 1 },
+    { "id": "I", "label": "I (A)", "digits": 3 },
+    { "id": "P", "label": "P (W)", "digits": 3 }
+  ],
+  "guide": "简单串联电路：电池 — 开关 — 滑动变阻器 — 灯泡（内阻 10Ω）。闭合开关点亮灯泡；调节电压或电阻，观察灯泡亮度（功率）与电流变化。断开开关后电路无电流。电路由 MNA 节点分析法实时求解。"
+}

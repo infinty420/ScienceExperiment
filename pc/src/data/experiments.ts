@@ -32,10 +32,10 @@ export const EXPERIMENTS: ExperimentInfo[] = [
   { id: 'physics.pendulum', title: '单摆测重力加速度', subject: 'physics', subjectLabel: '物理', difficulty: 2, wave: 'W2', available: true },
   { id: 'physics.projectile', title: '平抛运动规律探究', subject: 'physics', subjectLabel: '物理', difficulty: 2, wave: 'W2', available: true },
   // 物理 W3 电学/光学
-  { id: 'physics.circuit_basic', title: '基础电路搭建', subject: 'physics', subjectLabel: '物理', difficulty: 2, wave: 'W3', available: false },
-  { id: 'physics.lens', title: '凸透镜成像规律', subject: 'physics', subjectLabel: '物理', difficulty: 1, wave: 'W3', available: false },
-  { id: 'physics.refraction', title: '光的折射与全反射', subject: 'physics', subjectLabel: '物理', difficulty: 2, wave: 'W3', available: false },
-  { id: 'physics.ohm_law', title: '欧姆定律验证', subject: 'physics', subjectLabel: '物理', difficulty: 1, wave: 'W3', available: false },
+  { id: 'physics.circuit_basic', title: '基础电路搭建', subject: 'physics', subjectLabel: '物理', difficulty: 2, wave: 'W3', available: true },
+  { id: 'physics.lens', title: '凸透镜成像规律', subject: 'physics', subjectLabel: '物理', difficulty: 1, wave: 'W3', available: true },
+  { id: 'physics.refraction', title: '光的折射与全反射', subject: 'physics', subjectLabel: '物理', difficulty: 2, wave: 'W3', available: true },
+  { id: 'physics.ohm_law', title: '欧姆定律验证', subject: 'physics', subjectLabel: '物理', difficulty: 1, wave: 'W3', available: true },
   // 化学 W4
   { id: 'chemistry.acid_base', title: '酸碱中和滴定（初中）', subject: 'chemistry', subjectLabel: '化学', difficulty: 1, wave: 'W4', available: false },
   { id: 'chemistry.combustion', title: '燃烧条件探究', subject: 'chemistry', subjectLabel: '化学', difficulty: 1, wave: 'W4', available: false },

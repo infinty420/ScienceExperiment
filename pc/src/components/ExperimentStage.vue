@@ -18,6 +18,7 @@ const columns = ref<RecordColumn[]>([])
 const rows = ref<Row[]>([])
 const resultLines = ref<string[]>([])
 const noteText = ref('')
+const liveText = ref('')
 const theory = ref<{ points: Array<[number, number]>; label: string } | null>(null)
 const curveDef = ref<{ x: string; y: string; title: string } | null>(null)
 const guideText = ref('')
@@ -47,6 +48,12 @@ function post(type: string, payload: Record<string, unknown>): void {
   }
   if (type === 'note') {
     noteText.value = payload.text as string
+    return
+  }
+  if (type === 'live') {
+    const i = payload.current as number
+    const p = payload.lampPower as number
+    liveText.value = `电流 I = ${i.toFixed(3)} A · 灯泡功率 P = ${p.toFixed(2)} W`
   }
 }
 
@@ -179,6 +186,7 @@ function reset(): void {
             <button class="btn" @click="reset">重置</button>
             <span class="status">{{ status }}</span>
           </div>
+          <div class="live" v-if="liveText">{{ liveText }}</div>
           <div class="result" v-if="resultLines.length">
             <div v-for="(l, i) in resultLines" :key="i" class="result-line">{{ l }}</div>
           </div>
@@ -364,6 +372,16 @@ function reset(): void {
   font-size: 11px;
   color: #aaa;
   margin-left: auto;
+}
+
+.live {
+  margin-top: 8px;
+  font-size: 12px;
+  font-family: Consolas, monospace;
+  color: #3e6fb0;
+  background: #eaf0fa;
+  border-radius: 6px;
+  padding: 6px 10px;
 }
 
 .result {

@@ -1,0 +1,16 @@
+{
+  "id": "physics.lens",
+  "title": "凸透镜成像规律",
+  "camera": { "position": [0, 0.5, 9], "target": [0, 0.5, 0] },
+  "objects": [],
+  "params": [
+    { "id": "u", "label": "物距 u", "min": 10, "max": 60, "step": 1, "value": 30, "unit": "cm" },
+    { "id": "f", "label": "焦距 f", "min": 5, "max": 20, "step": 1, "value": 10, "unit": "cm" }
+  ],
+  "records": [
+    { "id": "u", "label": "u (cm)", "digits": 0 },
+    { "id": "v", "label": "v (cm)", "digits": 1 }
+  ],
+  "curve": { "x": "u", "y": "v", "title": "v – u 图（u = 2f 处 v = u）" },
+  "guide": "红色箭头为物，绿色箭头为像（虚像半透明）。三条特殊光线：①平行主轴折射过焦点；②过光心不偏折；③过焦点折射后平行主轴（虚像时虚线为反向延长线）。u > 2f 缩小实像、u = 2f 等大、f < u < 2f 放大实像、u = f 不成像、u < f 放大虚像（放大镜原理）。成像公式 1/f = 1/u + 1/v。"
+}
