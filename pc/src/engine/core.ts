@@ -31,7 +31,16 @@ export class Engine {
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas
-    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true })
+    // alpha:false 走合成器 opaque 路径，消除 ArkWeb 上 WebGL 画布闪烁
+    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true, alpha: false })
+    // 上下文丢失诊断（设备端闪烁时可在页面浮层看到原因）
+    canvas.addEventListener('webglcontextlost', (e) => {
+      e.preventDefault()
+      ;(window as unknown as { __scilabShow?: (m: string) => void }).__scilabShow?.('[contextlost] WebGL 上下文丢失，等待恢复…')
+    })
+    canvas.addEventListener('webglcontextrestored', () => {
+      ;(window as unknown as { __scilabShow?: (m: string) => void }).__scilabShow?.('[contextrestored] WebGL 上下文已恢复')
+    })
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2))
     this.renderer.setClearColor(0x1a2430, 1)
 

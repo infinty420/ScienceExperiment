@@ -19,8 +19,17 @@
               document.body.appendChild(d)
             }
             d.textContent += m + '\n'
+            // 超过 8 行自动只保留最新（防刷屏）
+            var lines = d.textContent.split('\n').filter(Boolean)
+            if (lines.length > 8) d.textContent = lines.slice(-8).join('\n') + '\n'
           } catch (_) {}
         }
+        ;(window).__scilabShow = show
+        // 点击浮层可暂时隐藏
+        document.addEventListener('click', function () {
+          var d = document.getElementById('scilab-errbox')
+          if (d) d.style.display = 'none'
+        })
         window.addEventListener('error', function (e) {
           show('[error] ' + (e.message || e.error) + (e.filename ? ' @' + (e.filename.split('/').pop()) + ':' + e.lineno : ''))
         })
