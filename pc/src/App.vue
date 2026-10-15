@@ -6,6 +6,15 @@ import { getFavorites, toggleFavorite, getRecent, pushRecent } from './store/fav
 import ExperimentStage from './components/ExperimentStage.vue'
 import CompareChart, { type CompareSet } from './components/CompareChart.vue'
 import StatsDashboard from './components/StatsDashboard.vue'
+import appIcon from './assets/app-icon.png'
+
+/** 学科色 / 图标（卡片视觉体系用） */
+function subjectColor(key: string): string {
+  return SUBJECTS.find((s) => s.key === key)?.color ?? '#3f8f79'
+}
+function subjectIcon(key: string): string {
+  return SUBJECTS.find((s) => s.key === key)?.icon ?? '⚛'
+}
 
 type View = 'list' | 'stage' | 'compare'
 
@@ -121,10 +130,10 @@ onUnmounted(() => {
     <!-- 侧边栏 -->
     <aside class="sidebar">
       <div class="logo">
-        <div class="logo-mark">S</div>
+        <img class="logo-img" :src="appIcon" alt="智实验" />
         <div>
           <div class="logo-title">智实验</div>
-          <div class="logo-sub">SciLab 3D</div>
+          <div class="logo-sub">SciLab · 3D 虚拟实验室</div>
         </div>
       </div>
 
@@ -146,6 +155,7 @@ onUnmounted(() => {
           </div>
           <div class="nav-divider"></div>
         </template>
+        <div class="nav-group-title">学科实验室</div>
         <div
           v-for="s in SUBJECTS"
           :key="s.key"
@@ -156,6 +166,8 @@ onUnmounted(() => {
           <span class="nav-icon">{{ s.icon }}</span>
           <span>{{ s.label }}</span>
         </div>
+        <div class="nav-divider"></div>
+        <div class="nav-group-title">工具与数据</div>
         <div class="nav-item" :class="{ active: view === 'stage' && current?.id === 'w1.demo' }" @click="openExperiment(EXPERIMENTS_DEMO)">
           <span class="nav-icon">▶</span>
           <span>W1 渲染验证</span>
@@ -189,22 +201,26 @@ onUnmounted(() => {
             v-for="e in searchResults"
             :key="e.id"
             class="exp-card"
+            :style="{ '--sc': subjectColor(e.subject) }"
             @click="openExperiment(e)"
           >
-            <div class="exp-title">{{ e.title }}</div>
-            <div class="exp-meta">
-              <span>{{ e.subjectLabel }}</span><span>·</span>
-              <span>难度 {{ difficultyLabel(e.difficulty) }}</span>
+            <div class="exp-head">
+              <span class="exp-icon">{{ subjectIcon(e.subject) }}</span>
+              <div class="exp-title">{{ e.title }}</div>
             </div>
-            <div class="exp-action go">开始实验</div>
+            <div class="exp-meta">
+              <span class="diff-chip" :class="'d' + e.difficulty">{{ difficultyLabel(e.difficulty) }}</span>
+              <span class="subject-chip">{{ e.subjectLabel }}</span>
+            </div>
+            <div class="exp-action go">开始实验 →</div>
           </div>
-          <div v-if="searchResults.length === 0" class="empty-history">没有匹配的实验，换个关键词试试</div>
+          <div v-if="searchResults.length === 0" class="empty-history">🔍 没有匹配的实验，换个关键词试试</div>
         </div>
       </template>
 
       <template v-else-if="view === 'list' && subjectKey !== '__history'">
         <header class="list-header">
-          <h1>{{ subjectInfo.label }}实验室</h1>
+          <h1><span class="h-dot" :style="{ background: subjectInfo.color }"></span>{{ subjectInfo.label }}实验室</h1>
           <span class="list-count">{{ list.length }} 个实验</span>
         </header>
         <div class="progress-strip">
@@ -219,6 +235,7 @@ onUnmounted(() => {
             :key="e.id"
             class="exp-card"
             :class="{ disabled: !e.available }"
+            :style="{ '--sc': subjectColor(e.subject) }"
             @click="openExperiment(e)"
           >
             <span
@@ -227,14 +244,16 @@ onUnmounted(() => {
               title="收藏"
               @click.stop="onToggleFav(e)"
             >{{ isFav(e.id) ? '★' : '☆' }}</span>
-            <div class="exp-title">{{ e.title }}</div>
+            <div class="exp-head">
+              <span class="exp-icon">{{ subjectIcon(e.subject) }}</span>
+              <div class="exp-title">{{ e.title }}</div>
+            </div>
             <div class="exp-meta">
-              <span>难度 {{ difficultyLabel(e.difficulty) }}</span>
-              <span>·</span>
-              <span>{{ e.wave }} 上线</span>
+              <span class="diff-chip" :class="'d' + e.difficulty">{{ difficultyLabel(e.difficulty) }}</span>
+              <span class="wave-chip">{{ e.wave }}</span>
             </div>
             <div class="exp-action" :class="{ go: e.available }">
-              {{ e.available ? '开始实验' : '敬请期待' }}
+              {{ e.available ? '开始实验 →' : '敬请期待' }}
             </div>
           </div>
         </div>
@@ -332,47 +351,45 @@ onUnmounted(() => {
   height: 100%;
 }
 
-/* 侧边栏 */
+/* 侧边栏（品牌渐变） */
 .sidebar {
-  width: 200px;
+  width: 210px;
   height: 100%;
-  background: #1e2a36;
+  background: linear-gradient(175deg, #1d2b38 0%, #16222d 55%, #12212b 100%);
   color: #cfd8e3;
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
+  border-right: 1px solid rgba(63, 143, 121, 0.25);
 }
 
 .logo {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 18px 16px;
-  border-bottom: 1px solid #2b3a48;
+  padding: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: linear-gradient(120deg, rgba(63, 143, 121, 0.16), transparent 70%);
 }
 
-.logo-mark {
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  background: #3f8f79;
-  color: #fff;
-  font-size: 20px;
-  font-weight: bold;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.logo-img {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(63, 143, 121, 0.45);
 }
 
 .logo-title {
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 17px;
+  font-weight: 700;
   color: #fff;
+  letter-spacing: 1px;
 }
 
 .logo-sub {
-  font-size: 11px;
+  font-size: 10.5px;
   color: #7a8a99;
+  margin-top: 1px;
 }
 
 .search-box {
@@ -418,9 +435,10 @@ onUnmounted(() => {
 
 .progress-fill {
   height: 100%;
-  background: #3f8f79;
+  background: linear-gradient(90deg, #3f8f79, #5ec2a3);
   border-radius: 4px;
   transition: width 0.4s;
+  box-shadow: 0 0 8px rgba(63, 143, 121, 0.5);
 }
 
 .progress-pct {
@@ -485,6 +503,17 @@ onUnmounted(() => {
 
 .list-header h1 {
   font-size: 22px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.h-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 4px;
+  display: inline-block;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
 }
 
 .list-count {
@@ -503,37 +532,109 @@ onUnmounted(() => {
   position: relative;
   background: #fff;
   border-radius: 12px;
-  padding: 16px;
+  padding: 16px 16px 14px;
   cursor: pointer;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-  transition: box-shadow 0.15s;
+  box-shadow: 0 1px 3px rgba(20, 40, 50, 0.07);
+  transition: box-shadow 0.18s, transform 0.18s;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 9px;
+  border-top: 3px solid var(--sc, #3f8f79);
+  overflow: hidden;
+}
+
+.exp-card::after {
+  content: '';
+  position: absolute;
+  right: -22px;
+  top: -22px;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--sc, #3f8f79);
+  opacity: 0.05;
+  pointer-events: none;
 }
 
 .exp-card:hover {
-  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 6px 18px rgba(20, 40, 50, 0.14);
+  transform: translateY(-2px);
 }
 
 .exp-card.disabled {
-  opacity: 0.65;
+  opacity: 0.6;
+  filter: grayscale(0.4);
 }
 
 .exp-card.disabled:hover {
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 1px 3px rgba(20, 40, 50, 0.07);
+  transform: none;
+}
+
+.exp-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+}
+
+.exp-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--sc, #3f8f79) 14%, #fff);
+  color: var(--sc, #3f8f79);
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .exp-title {
-  font-size: 15px;
+  font-size: 14.5px;
   font-weight: 600;
+  color: #22323f;
+  line-height: 1.35;
+}
+
+.diff-chip {
+  font-size: 11px;
+  padding: 2px 9px;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+.diff-chip.d1 {
+  color: #2e7d5f;
+  background: #e5f4ee;
+}
+
+.diff-chip.d2 {
+  color: #b0722a;
+  background: #fbf1e2;
+}
+
+.diff-chip.d3 {
+  color: #c05a5a;
+  background: #fbe9e9;
+}
+
+.wave-chip,
+.subject-chip {
+  font-size: 11px;
+  color: #8a97a5;
+  background: #f1f4f7;
+  padding: 2px 9px;
+  border-radius: 10px;
+  font-family: Consolas, monospace;
 }
 
 .exp-meta {
   font-size: 12px;
-  color: #999;
+  color: #9aa6b2;
   display: flex;
   gap: 6px;
+  align-items: center;
 }
 
 .exp-action {
@@ -547,8 +648,9 @@ onUnmounted(() => {
 
 .exp-action.go {
   color: #fff;
-  background: #3f8f79;
-  border-color: #3f8f79;
+  background: linear-gradient(120deg, #3f8f79, #357a68);
+  border-color: transparent;
+  box-shadow: 0 2px 6px rgba(63, 143, 121, 0.3);
 }
 
 .clear-btn {
@@ -571,16 +673,21 @@ onUnmounted(() => {
 .empty-history {
   grid-column: 1 / -1;
   text-align: center;
-  color: #aaa;
+  color: #aab3bd;
   font-size: 13px;
   padding: 60px 0;
+  background: #fbfcfd;
+  border-radius: 12px;
+  border: 1px dashed #dde3e9;
 }
 
 /* V3：最近使用 / 收藏 */
 .nav-group-title {
-  font-size: 11px;
+  font-size: 10.5px;
   color: #5f7080;
-  padding: 2px 12px 4px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  padding: 6px 12px 4px;
 }
 
 .nav-divider {
