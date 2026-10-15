@@ -489,6 +489,7 @@ function onParam(p: ParamDef, value: number): void {
   if (replaying.value) return
   paramValues.value[p.id] = value
   logic?.onParam(p.id, value)
+  engine?.markDirty()
   pushEvent('param', `${p.label} ${value}${p.unit ? ' ' + p.unit : ''}`)
   if (state.value !== 'idle') {
     state.value = 'idle'
@@ -509,12 +510,14 @@ function start(): void {
   }
   logic?.start()
   state.value = 'running'
+  engine?.markDirty()
   pushEvent('start', '开始实验')
 }
 
 function pause(): void {
   logic?.pause()
   state.value = 'paused'
+  engine?.markDirty()
   pushEvent('pause', '暂停')
 }
 
@@ -525,6 +528,7 @@ function reset(): void {
   }
   logic?.reset()
   state.value = 'idle'
+  engine?.markDirty()
   rows.value = []
   resultLines.value = []
   theory.value = null

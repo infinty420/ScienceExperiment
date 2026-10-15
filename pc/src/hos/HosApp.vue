@@ -28,7 +28,8 @@ function onBack(): void {
 </script>
 
 <template>
-  <ExperimentStage :experiment-id="expId" :title="title" @back="onBack" />
+  <!-- key=expId：实验切换时强制重建实验台（ExperimentStage 仅在挂载时读取 experimentId） -->
+  <ExperimentStage :key="expId" :experiment-id="expId" :title="title" @back="onBack" />
 </template>
 
 <style>

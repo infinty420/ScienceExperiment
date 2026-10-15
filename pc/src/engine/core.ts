@@ -76,6 +76,12 @@ export class Engine {
     this.camera.position.set(position[0], position[1], position[2])
     this._target.set(target[0], target[1], target[2])
     this.camera.lookAt(this._target)
+    this._dirty = true
+  }
+
+  /** V4：按需渲染——外部（参数变化等）标记需要重绘 */
+  markDirty(): void {
+    this._dirty = true
   }
 
   private _bindEvents(): void {
@@ -151,6 +157,7 @@ export class Engine {
     p.z = t.z + Math.sin(theta) * hr * Math.cos(phi)
     p.y = t.y + hr * Math.sin(phi)
     this.camera.lookAt(t)
+    this._dirty = true
   }
 
   zoom(factor: number): void {
@@ -160,6 +167,7 @@ export class Engine {
     v.setLength(len)
     p.copy(this._target).add(v)
     this.camera.lookAt(this._target)
+    this._dirty = true
   }
 
   resetCamera(position: number[], target: number[]): void {
@@ -188,6 +196,7 @@ export class Engine {
     this.renderer.setSize(w, h, false)
     this.camera.aspect = w / h
     this.camera.updateProjectionMatrix()
+    this._dirty = true
   }
 
   private _lastW = 0
@@ -195,12 +204,19 @@ export class Engine {
   private _resizeCount = 0
   private _resizeTime = 0
 
+  /** V4：按需渲染状态——dirty 即时渲染；运行中 30fps 上限；空闲 500ms 心跳 */
+  private _dirty = true
+  private _lastRenderT = 0
+  private _acc = 0
+
   /** V2：单步推进（暂停态有效）：以当前流速步进 1/120s 并渲染 */
   stepOnce(): void {
     if (!this.paused) return
     const dt = (1 / 120) * this.timeScale
     for (const fn of this.updatables) fn(dt)
     this.renderer.render(this.scene, this.camera)
+    this._lastRenderT = performance.now()
+    this._dirty = false
   }
 
   private _loop(): void {
@@ -217,9 +233,21 @@ export class Engine {
     }
 
     const dt = this.paused ? 0 : rawDt * this.timeScale
+    this._acc += dt
     if (dt > 0) this.onFrame?.(dt)
-    for (const fn of this.updatables) fn(dt)
-    this.renderer.render(this.scene, this.camera)
+
+    // 按需渲染：交互/参数变化即时画；运行中封顶 30fps；空闲每 500ms 心跳一帧
+    const now = performance.now()
+    const active = dt > 0 || this._dirty
+    const due = active ? now - this._lastRenderT >= 33 : now - this._lastRenderT >= 500
+    if (active || due) {
+      const step = this._acc
+      this._acc = 0
+      for (const fn of this.updatables) fn(step)
+      this.renderer.render(this.scene, this.camera)
+      this._lastRenderT = now
+      this._dirty = false
+    }
   }
 
   dispose(): void {
