@@ -31,8 +31,8 @@ export class Engine {
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas
-    // alpha:false 走合成器 opaque 路径，消除 ArkWeb 上 WebGL 画布闪烁
-    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true, alpha: false })
+    // alpha:false 走合成器 opaque 路径；antialias:false 规避 Mali 上 MSAA 合成闪烁
+    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, preserveDrawingBuffer: true, alpha: false })
     // 上下文丢失诊断（设备端闪烁时可在页面浮层看到原因）
     canvas.addEventListener('webglcontextlost', (e) => {
       e.preventDefault()
@@ -41,7 +41,7 @@ export class Engine {
     canvas.addEventListener('webglcontextrestored', () => {
       ;(window as unknown as { __scilabShow?: (m: string) => void }).__scilabShow?.('[contextrestored] WebGL 上下文已恢复')
     })
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2))
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5))
     this.renderer.setClearColor(0x1a2430, 1)
 
     this.scene = new THREE.Scene()
@@ -160,10 +160,31 @@ export class Engine {
   resize(): void {
     const w = this.canvas.clientWidth || 1
     const h = this.canvas.clientHeight || 1
+    // 幂等守卫：尺寸未变不重设缓冲（防 ResizeObserver 风暴导致每帧重分配→闪烁）
+    if (w === this._lastW && h === this._lastH) return
+    this._lastW = w
+    this._lastH = h
+    // 风暴检测：1 秒内 resize 超过 10 次则提示（诊断用，正常完全静默）
+    this._resizeCount++
+    const now = performance.now()
+    if (now - this._resizeTime > 1000) {
+      if (this._resizeCount > 10) {
+        ;(window as unknown as { __scilabShow?: (m: string) => void }).__scilabShow?.(
+          `[resize风暴] 1s 内 ${this._resizeCount} 次 resize（${w}x${h}）`
+        )
+      }
+      this._resizeCount = 0
+      this._resizeTime = now
+    }
     this.renderer.setSize(w, h, false)
     this.camera.aspect = w / h
     this.camera.updateProjectionMatrix()
   }
+
+  private _lastW = 0
+  private _lastH = 0
+  private _resizeCount = 0
+  private _resizeTime = 0
 
   /** V2：单步推进（暂停态有效）：以当前流速步进 1/120s 并渲染 */
   stepOnce(): void {
