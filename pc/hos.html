@@ -35,6 +35,43 @@
               show('[watchdog] Vue 未挂载：#app 为空。若上方无 JS 错误，说明脚本未执行或 WebView 环境受限（如 DevEco 预览器不支持 Web 组件 JS）。')
             }
           }, 4000)
+          // WebGL 能力探针：支持性 + 渲染器名 + 回读测试
+          setTimeout(function () {
+            try {
+              var lines = []
+              var c2 = document.createElement('canvas')
+              var gl2 = c2.getContext('webgl2')
+              var c1 = document.createElement('canvas')
+              var gl1 = gl2 ? null : c1.getContext('webgl')
+              var gl = gl2 || gl1
+              lines.push('webgl2:' + (gl2 ? 'YES' : 'NO') + ' webgl1:' + (gl1 ? 'YES' : 'NO'))
+              if (gl) {
+                var dbg = gl.getExtension('WEBGL_debug_renderer_info')
+                lines.push('gpu:' + String(dbg ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER)).slice(0, 60))
+                gl.clearColor(1, 0, 0, 1)
+                gl.clear(gl.COLOR_BUFFER_BIT)
+                var px = new Uint8Array(4)
+                gl.readPixels(1, 1, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px)
+                lines.push('readback:' + px.join(','))
+              }
+              var app2 = document.getElementById('app')
+              var cv = app2 ? app2.querySelector('canvas') : null
+              if (cv) {
+                lines.push('appCanvas:' + cv.clientWidth + 'x' + cv.clientHeight + ' buf:' + cv.width + 'x' + cv.height)
+                var agl = cv.getContext('webgl2') || cv.getContext('webgl')
+                if (agl) {
+                  var apx = new Uint8Array(4)
+                  agl.readPixels(Math.floor(agl.drawingBufferWidth / 2), Math.floor(agl.drawingBufferHeight / 2), 1, 1, agl.RGBA, agl.UNSIGNED_BYTE, apx)
+                  lines.push('centerRGBA:' + apx.join(','))
+                }
+              } else {
+                lines.push('appCanvas: 未找到')
+              }
+              show('[glprobe] ' + lines.join(' | '))
+            } catch (err) {
+              show('[glprobe error] ' + String(err))
+            }
+          }, 5000)
         })
       })()
     </script>
