@@ -32,7 +32,16 @@ export class Engine {
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas
     // alpha:false 走合成器 opaque 路径；antialias:false 规避 Mali 上 MSAA 合成闪烁
-    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, preserveDrawingBuffer: true, alpha: false })
+    this.renderer = new THREE.WebGLRenderer({
+      canvas,
+      antialias: false,
+      preserveDrawingBuffer: true,
+      alpha: false,
+      powerPreference: 'high-performance'
+    })
+    // 渲染缩放：宿主可通过 window.__SCILAB_RENDER_SCALE 指定（鸿蒙 Mali GPU 降负载防闪烁）
+    const forcedScale = (window as unknown as { __SCILAB_RENDER_SCALE?: number }).__SCILAB_RENDER_SCALE
+    this.renderer.setPixelRatio(forcedScale ?? Math.min(window.devicePixelRatio || 1, 2))
     // 上下文丢失诊断（设备端闪烁时可在页面浮层看到原因）
     canvas.addEventListener('webglcontextlost', (e) => {
       e.preventDefault()
@@ -41,7 +50,7 @@ export class Engine {
     canvas.addEventListener('webglcontextrestored', () => {
       ;(window as unknown as { __scilabShow?: (m: string) => void }).__scilabShow?.('[contextrestored] WebGL 上下文已恢复')
     })
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5))
+    // 渲染缩放由构造时的 forcedScale 决定，此处不再重复设置
     this.renderer.setClearColor(0x1a2430, 1)
 
     this.scene = new THREE.Scene()
