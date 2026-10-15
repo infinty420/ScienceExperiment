@@ -415,7 +415,25 @@ function addNoise(row: Row): Row {
   })
 }
 
+/** V3：键盘快捷键（空格=开始/暂停、.=单步、R=重置）；输入框聚焦时忽略 */
+function onKeydown(ev: KeyboardEvent): void {
+  const target = ev.target as HTMLElement | null
+  if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return
+  if (replaying.value) return
+  if (ev.key === ' ') {
+    ev.preventDefault()
+    if (state.value === 'running') pause()
+    else start()
+  } else if (ev.key === '.') {
+    ev.preventDefault()
+    stepOnce()
+  } else if (ev.key === 'r' || ev.key === 'R') {
+    reset()
+  }
+}
+
 onMounted(() => {
+  window.addEventListener('keydown', onKeydown)
   const canvas = canvasRef.value
   if (!canvas) return
 
@@ -458,6 +476,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  window.removeEventListener('keydown', onKeydown)
   logic?.dispose()
   physics?.dispose()
   engine?.dispose()

@@ -2,8 +2,10 @@
 import { ref, computed, onUnmounted } from 'vue'
 import { SUBJECTS, EXPERIMENTS, experimentsOf, difficultyLabel, type ExperimentInfo } from './data/experiments'
 import { getHistory, clearHistory, type HistoryEntry } from './store/history'
+import { getFavorites, toggleFavorite, getRecent, pushRecent } from './store/favorites'
 import ExperimentStage from './components/ExperimentStage.vue'
 import CompareChart, { type CompareSet } from './components/CompareChart.vue'
+import StatsDashboard from './components/StatsDashboard.vue'
 
 type View = 'list' | 'stage' | 'compare'
 
@@ -36,9 +38,34 @@ function selectSubject(key: string): void {
 
 function openExperiment(e: ExperimentInfo): void {
   if (!e.available) return
+  pushRecent(e.id)
+  recentIds.value = getRecent()
   current.value = e
   view.value = 'stage'
 }
+
+/* ───── V3：收藏 + 最近使用 ───── */
+const favIds = ref<string[]>(getFavorites())
+const recentIds = ref<string[]>(getRecent())
+const historyTab = ref<'records' | 'stats'>('records')
+
+function isFav(id: string): boolean {
+  return favIds.value.includes(id)
+}
+
+function onToggleFav(e: ExperimentInfo): void {
+  const now = toggleFavorite(e.id)
+  favIds.value = getFavorites()
+  if (now) pushRecent(e.id)
+  recentIds.value = getRecent()
+}
+
+const recentExps = computed(() =>
+  recentIds.value
+    .map((id) => EXPERIMENTS.find((e) => e.id === id))
+    .filter((e): e is ExperimentInfo => !!e && e.available)
+    .slice(0, 4)
+)
 
 function backToList(): void {
   view.value = 'list'
@@ -105,6 +132,20 @@ onUnmounted(() => {
         <div class="search-box">
           <input v-model="searchKey" placeholder="搜索实验…" />
         </div>
+        <template v-if="recentExps.length && !searchKey.trim()">
+          <div class="nav-group-title">最近使用</div>
+          <div
+            v-for="e in recentExps"
+            :key="'r-' + e.id"
+            class="nav-item recent"
+            :class="{ active: view === 'stage' && current?.id === e.id }"
+            @click="openExperiment(e)"
+          >
+            <span class="nav-icon">·</span>
+            <span class="recent-title">{{ e.title }}</span>
+          </div>
+          <div class="nav-divider"></div>
+        </template>
         <div
           v-for="s in SUBJECTS"
           :key="s.key"
@@ -133,7 +174,7 @@ onUnmounted(() => {
         </div>
       </nav>
 
-      <div class="sidebar-footer">v2.0 · 26 个实验 · 全程离线</div>
+      <div class="sidebar-footer">v3.0 · 27 个实验 · 全程离线</div>
     </aside>
 
     <!-- 主区域 -->
@@ -180,6 +221,12 @@ onUnmounted(() => {
             :class="{ disabled: !e.available }"
             @click="openExperiment(e)"
           >
+            <span
+              class="fav-star"
+              :class="{ on: isFav(e.id) }"
+              title="收藏"
+              @click.stop="onToggleFav(e)"
+            >{{ isFav(e.id) ? '★' : '☆' }}</span>
             <div class="exp-title">{{ e.title }}</div>
             <div class="exp-meta">
               <span>难度 {{ difficultyLabel(e.difficulty) }}</span>
@@ -251,12 +298,22 @@ onUnmounted(() => {
         <header class="list-header">
           <h1>我的成绩</h1>
           <span class="list-count">{{ history.length }} 条完成记录</span>
-          <button v-if="history.length" class="clear-btn" @click="onClearHistory">清空</button>
+          <div class="hist-tabs">
+            <button class="hist-tab" :class="{ on: historyTab === 'records' }" @click="historyTab = 'records'">记录列表</button>
+            <button class="hist-tab" :class="{ on: historyTab === 'stats' }" @click="historyTab = 'stats'">数据看板</button>
+          </div>
+          <button v-if="history.length && historyTab === 'records'" class="clear-btn" @click="onClearHistory">清空</button>
         </header>
-        <div class="list-grid">
+        <template v-if="historyTab === 'stats'">
+          <StatsDashboard :history="history" />
+        </template>
+        <div v-else class="list-grid">
           <div v-for="h in history" :key="h.experimentId" class="exp-card">
             <div class="exp-title">{{ h.title }}</div>
-            <div class="exp-meta"><span>{{ h.date }}</span><span>·</span><span>{{ h.rowCount }} 组数据</span></div>
+            <div class="exp-meta">
+              <span>{{ h.date }}</span><span>·</span><span>{{ h.rowCount }} 组数据</span>
+              <span v-if="h.mode === 'exam'" class="exam-badge">{{ h.score ?? '-' }} 分</span>
+            </div>
             <div class="history-result">{{ h.resultLines[0] }}</div>
           </div>
           <div v-if="history.length === 0" class="empty-history">
@@ -443,6 +500,7 @@ onUnmounted(() => {
 }
 
 .exp-card {
+  position: relative;
   background: #fff;
   border-radius: 12px;
   padding: 16px;
@@ -516,6 +574,77 @@ onUnmounted(() => {
   color: #aaa;
   font-size: 13px;
   padding: 60px 0;
+}
+
+/* V3：最近使用 / 收藏 */
+.nav-group-title {
+  font-size: 11px;
+  color: #5f7080;
+  padding: 2px 12px 4px;
+}
+
+.nav-divider {
+  height: 1px;
+  background: #2b3a48;
+  margin: 8px 6px;
+}
+
+.nav-item.recent {
+  padding: 7px 12px;
+  font-size: 13px;
+}
+
+.recent-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fav-star {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  font-size: 16px;
+  color: #c8ccd2;
+  cursor: pointer;
+  user-select: none;
+}
+
+.fav-star:hover {
+  color: #e0a93e;
+}
+
+.fav-star.on {
+  color: #e0a93e;
+}
+
+/* V3：成绩视图标签页 */
+.hist-tabs {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.hist-tab {
+  font-size: 12px;
+  color: #778;
+  background: none;
+  border: 1px solid #dde2e7;
+  border-radius: 14px;
+  padding: 3px 12px;
+  cursor: pointer;
+}
+
+.hist-tab.on {
+  color: #fff;
+  background: #3f8f79;
+  border-color: #3f8f79;
+}
+
+.exam-badge {
+  color: #b3702d;
+  font-weight: 600;
+  font-family: Consolas, monospace;
 }
 
 /* 对照实验 */

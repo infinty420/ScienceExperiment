@@ -174,7 +174,82 @@ export class PrecipitateLogic implements ExperimentLogic {
   }
 }
 
-/** ④ 金属活动性：Mg / Zn / Cu + 稀盐酸 */
+/** ⑤ 氧气制备与检验（V3）：加热 KMnO₄ → 排水集气 → 带火星木条复燃 */
+export class GasPrepareLogic implements ExperimentLogic {
+  private ctx!: ExperimentContext
+  private vis!: ChemVisual
+  private heat = 1
+  private kmno4 = 8
+  private t = 0
+  private volume = 0
+  private sampleAcc = 0
+  /** 教学简化：每 g 高锰酸钾约产气 8 mL（最大收集体积） */
+  private maxVolume(): number {
+    return this.kmno4 * 8
+  }
+  /** 产气速率 mL/s：加热后约 40 s 集满 */
+  private rate(): number {
+    return this.maxVolume() / 40
+  }
+
+  init(ctx: ExperimentContext): void {
+    this.ctx = ctx
+    this.vis = new ChemVisual(ctx.engine.scene, '#cfe8e2')
+    for (const p of ctx.def.params) this.onParam(p.id, p.value)
+  }
+
+  onParam(id: string, value: number): void {
+    if (id === 'heat') this.heat = value
+    else if (id === 'kmno4') this.kmno4 = value
+    this.vis.setFlame(this.heat >= 0.5)
+    this.postResult()
+  }
+
+  private postResult(): void {
+    const full = this.volume >= this.maxVolume() - 0.01
+    this.ctx.post('result', {
+      lines: [
+        `2KMnO₄ —Δ→ K₂MnO₄ + MnO₂ + O₂↑（加热 ${this.kmno4} g 高锰酸钾）`,
+        `当前收集 V(O₂) = ${this.volume.toFixed(1)} mL / 集气瓶容量 ${this.maxVolume().toFixed(0)} mL${full ? '（已集满）' : ''}`,
+        '检验：带火星的木条伸入集气瓶 → ' + (this.volume > 5 ? '复燃，证明是氧气' : '火星变暗（氧气不足）'),
+        '安全要点：试管口略向下倾斜防冷凝水回流；结束时先撤导管后熄灯，防止水倒吸炸裂试管'
+      ]
+    })
+  }
+
+  start(): void {}
+  pause(): void {}
+  reset(): void {
+    this.t = 0
+    this.volume = 0
+    this.sampleAcc = 0
+    this.postResult()
+  }
+  update(dt: number): void {
+    this.vis.update(dt)
+    if (this.heat < 0.5) {
+      this.vis.setBubbles(0)
+      return
+    }
+    if (this.volume < this.maxVolume()) {
+      this.volume = Math.min(this.maxVolume(), this.volume + this.rate() * dt)
+      this.t += dt
+      // 气泡强度随产气速率
+      this.vis.setBubbles(Math.min(1, this.rate() / 2))
+      this.sampleAcc += dt
+      if (this.sampleAcc >= 1) {
+        this.sampleAcc = 0
+        this.ctx.post('data', { row: [+this.t.toFixed(1), +this.volume.toFixed(2)] })
+        this.postResult()
+      }
+    } else {
+      this.vis.setBubbles(0.15)
+    }
+  }
+  dispose(): void {
+    this.vis.dispose(this.ctx.engine.scene)
+  }
+}
 const METALS = [
   { name: '镁 Mg', rate: 1.0, equation: 'Mg + 2HCl → MgCl₂ + H₂↑', desc: '剧烈反应，产生大量气泡' },
   { name: '锌 Zn', rate: 0.35, equation: 'Zn + 2HCl → ZnCl₂ + H₂↑', desc: '反应较缓慢，气泡连续' },

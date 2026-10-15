@@ -47,7 +47,7 @@ export const EXPERIMENTS: ExperimentInfo[] = [
   { id: 'chemistry.combustion', title: '燃烧条件探究', subject: 'chemistry', subjectLabel: '化学', difficulty: 1, wave: 'W4', available: true },
   { id: 'chemistry.precipitate', title: '沉淀反应与颜色变化', subject: 'chemistry', subjectLabel: '化学', difficulty: 2, wave: 'W4', available: true },
   { id: 'chemistry.metal_activity', title: '金属活动性顺序', subject: 'chemistry', subjectLabel: '化学', difficulty: 1, wave: 'W4', available: true },
-  { id: 'chemistry.gas_prepare', title: '氧气制备与检验', subject: 'chemistry', subjectLabel: '化学', difficulty: 2, wave: 'W4', available: false },
+  { id: 'chemistry.gas_prepare', title: '氧气制备与检验', subject: 'chemistry', subjectLabel: '化学', difficulty: 2, wave: 'V3', available: true },
   // 生物 W5
   { id: 'biology.microscope', title: '显微镜的使用', subject: 'biology', subjectLabel: '生物', difficulty: 1, wave: 'W5', available: true },
   { id: 'biology.cell', title: '细胞结构 3D 探索', subject: 'biology', subjectLabel: '生物', difficulty: 1, wave: 'W5', available: true },

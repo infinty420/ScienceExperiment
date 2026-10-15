@@ -7,7 +7,7 @@ import { ProjectileLogic } from './logic/projectile'
 import { CircuitBasicLogic, OhmLawLogic } from './logic/circuit'
 import { LensLogic } from './logic/lens'
 import { RefractionLogic } from './logic/refraction'
-import { AcidBaseLogic, CombustionLogic, PrecipitateLogic, MetalActivityLogic } from './logic/chem'
+import { AcidBaseLogic, CombustionLogic, PrecipitateLogic, MetalActivityLogic, GasPrepareLogic } from './logic/chem'
 import { CellLogic, PhotosynthesisLogic, MicroscopeLogic } from './logic/biology'
 import { TitrationLogic, RlcLogic, UncertaintyLogic, GeneticsLogic, EnzymeLogic } from './logic/college'
 import { CollisionLogic, ShmLogic, BuoyancyLogic, GasLawLogic, EnergyLogic } from './logic/advanced'
@@ -27,6 +27,7 @@ const LOGICS: Record<string, () => ExperimentLogic> = {
   'chemistry.combustion': () => new CombustionLogic(),
   'chemistry.precipitate': () => new PrecipitateLogic(),
   'chemistry.metal_activity': () => new MetalActivityLogic(),
+  'chemistry.gas_prepare': () => new GasPrepareLogic(),
   'biology.microscope': () => new MicroscopeLogic(),
   'biology.cell': () => new CellLogic(),
   'biology.photosynthesis': () => new PhotosynthesisLogic(),
