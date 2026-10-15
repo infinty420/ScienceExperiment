@@ -32,6 +32,23 @@ def js_repl(m):
 
 html2 = re.sub(r'<script[^>]*src="\./(assets/[^"]+)"[^>]*></script>', js_repl, html2)
 
+# 关键修复：把主应用脚本挪到 </body> 前。
+# Vite 会把入口脚本注入 <head>；IIFE 经典脚本没有 module 的 defer 语义，
+# 在 head 中立即执行时 <div id="app"> 尚未解析 → mount('#app') 返回 null 静默失败。
+m = re.search(r'<script>\s*\nvar [A-Za-z_$_]', html2)
+if m:
+    start = m.start()
+    end = html2.index('</script>', start) + len('</script>')
+    block = html2[start:end]
+    html2 = html2[:start] + html2[end:]
+    if '</body>' in html2:
+        html2 = html2.replace('</body>', block + '\n</body>')
+    else:
+        html2 += '\n' + block
+    print('app script relocated to end of <body>')
+else:
+    print('WARN: app script block not found for relocation')
+
 # 残留外链检查
 leftover = re.findall(r'(?:src|href)="\./assets/[^"]*"', html2)
 if leftover:

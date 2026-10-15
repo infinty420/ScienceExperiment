@@ -4,6 +4,40 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
     <title>智实验 SciLab</title>
+    <script>
+      // 诊断预脚本：任何 JS 错误以红底浮层直接显示在页面内（不依赖 nativeBridge）
+      ;(function () {
+        function show(m) {
+          try {
+            var d = document.getElementById('scilab-errbox')
+            if (!d) {
+              d = document.createElement('pre')
+              d.id = 'scilab-errbox'
+              d.style.cssText =
+                'position:fixed;top:0;left:0;right:0;z-index:99999;background:#5a1a1a;color:#ffd9d9;' +
+                'font:11px/1.4 Consolas,monospace;padding:8px;white-space:pre-wrap;max-height:45%;overflow:auto;margin:0'
+              document.body.appendChild(d)
+            }
+            d.textContent += m + '\n'
+          } catch (_) {}
+        }
+        window.addEventListener('error', function (e) {
+          show('[error] ' + (e.message || e.error) + (e.filename ? ' @' + (e.filename.split('/').pop()) + ':' + e.lineno : ''))
+        })
+        window.addEventListener('unhandledrejection', function (e) {
+          var r = e.reason
+          show('[promise] ' + String((r && r.stack) || r))
+        })
+        document.addEventListener('DOMContentLoaded', function () {
+          setTimeout(function () {
+            var app = document.getElementById('app')
+            if (!app || app.childElementCount === 0) {
+              show('[watchdog] Vue 未挂载：#app 为空。若上方无 JS 错误，说明脚本未执行或 WebView 环境受限（如 DevEco 预览器不支持 Web 组件 JS）。')
+            }
+          }, 4000)
+        })
+      })()
+    </script>
   </head>
   <body>
     <div id="app"></div>
