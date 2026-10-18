@@ -38,13 +38,16 @@ export class Engine {
     this._composite = !!(window as unknown as { __SCILAB_COMPOSITE_2D?: boolean }).__SCILAB_COMPOSITE_2D
     this._glCanvas = this._composite ? document.createElement('canvas') : canvas
     if (this._composite) {
-      this._ctx2d = canvas.getContext('2d', { alpha: false })
+      this._ctx2d = canvas.getContext('2d', { alpha: false, willReadFrequently: true })
+      const show = (window as unknown as { __scilabShow?: (m: string) => void }).__scilabShow
+      show?.(this._ctx2d ? '[boot] r3 2d-composite' : '[boot] r3 2d context 创建失败!')
     }
     // alpha:false 走合成器 opaque 路径；antialias:false 规避 Mali 上 MSAA 合成闪烁
     this.renderer = new THREE.WebGLRenderer({
       canvas: this._glCanvas,
       antialias: false,
-      preserveDrawingBuffer: true,
+      // 合成模式下同一任务内立即 blit，缓冲必然有效；preserve 在 Mali tiler 上每帧强制整块回写，是帧耗时大头
+      preserveDrawingBuffer: !this._composite,
       alpha: false,
       powerPreference: 'high-performance'
     })
@@ -213,6 +216,11 @@ export class Engine {
     this._dirty = true
   }
 
+  private _perfStart = performance.now()
+  private _perfAcc = 0
+  private _perfN = 0
+  private _perfDone = false
+
   private _lastW = 0
   private _lastH = 0
   private _resizeCount = 0
@@ -233,9 +241,56 @@ export class Engine {
     this._dirty = false
   }
 
-  /** 2D 合成：把离屏 GL 画布拷贝到可见画布 */
+  /** 2D 合成 blit 模式：drawImage 快路径 / readPixels CPU 兜底（drawImage 读回失败时自动切换） */
+  private _blitMode: 'draw' | 'read' | null = null
+  private _blitChecks = 0
+  private _px: Uint8Array | null = null
+  private _img: ImageData | null = null
+
+  /** 2D 合成：把离屏 GL 画布拷贝到可见画布（带自检与 CPU 兜底） */
   private _blit(): void {
-    if (this._ctx2d) this._ctx2d.drawImage(this._glCanvas, 0, 0)
+    const ctx = this._ctx2d
+    if (!ctx) return
+    const w = this._glCanvas.width
+    const h = this._glCanvas.height
+    if (w === 0 || h === 0) return
+    if (this._blitMode !== 'read') {
+      ctx.drawImage(this._glCanvas, 0, 0)
+      if (this._blitMode === null) {
+        this._blitChecks++
+        // 抽样校验：GL 与 2D 同位置像素对比，不一致 = drawImage 读回失败（ArkWeb 已知风险路径）
+        const gl = this.renderer.getContext()
+        const gp = new Uint8Array(4)
+        const x = Math.min(8, w - 1)
+        const y = Math.min(8, h - 1)
+        gl.readPixels(x, h - 1 - y, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, gp)
+        const cp = ctx.getImageData(x, y, 1, 1).data
+        const diff = Math.abs(gp[0] - cp[0]) + Math.abs(gp[1] - cp[1]) + Math.abs(gp[2] - cp[2])
+        const show = (window as unknown as { __scilabShow?: (m: string) => void }).__scilabShow
+        if (diff > 12) {
+          this._blitMode = 'read'
+          show?.('[blit] drawImage 读回失败 diff=' + diff + '，切 readPixels 兜底')
+        } else if (this._blitChecks >= 3) {
+          this._blitMode = 'draw'
+          show?.('[blit] drawImage 路径正常')
+        }
+      }
+      if (this._blitMode !== 'read') return
+    }
+    // CPU 兜底：readPixels + putImageData（Y 翻转，replace 语义无合成）
+    const gl = this.renderer.getContext()
+    const need = w * h * 4
+    if (!this._px || this._px.length !== need) {
+      this._px = new Uint8Array(need)
+      this._img = ctx.createImageData(w, h)
+    }
+    gl.readPixels(0, 0, w, h, gl.RGBA, gl.UNSIGNED_BYTE, this._px)
+    const row = w * 4
+    const data = this._img.data
+    for (let y = 0; y < h; y++) {
+      data.set(this._px.subarray((h - 1 - y) * row, (h - y) * row), y * row)
+    }
+    ctx.putImageData(this._img, 0, 0)
   }
 
   private _loop(): void {
@@ -262,9 +317,21 @@ export class Engine {
     if (active || due) {
       const step = this._acc
       this._acc = 0
+      const rt0 = performance.now()
       for (const fn of this.updatables) fn(step)
       this.renderer.render(this.scene, this.camera); this._blit()
       this._lastRenderT = now
+      // 帧耗时探针：5 秒窗口上报一次平均帧成本（设备端定位 VSync 超支用）
+      if (!this._perfDone) {
+        this._perfAcc += performance.now() - rt0
+        this._perfN++
+        if (rt0 - this._perfStart > 5000 && this._perfN > 5) {
+          this._perfDone = true
+          ;(window as unknown as { __scilabShow?: (m: string) => void }).__scilabShow?.(
+            '[perf] 平均帧耗时 ' + (this._perfAcc / this._perfN).toFixed(1) + 'ms (n=' + this._perfN + ')'
+          )
+        }
+      }
       this._dirty = false
     }
   }
