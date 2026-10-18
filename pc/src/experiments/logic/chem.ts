@@ -1,4 +1,4 @@
-import type { ExperimentContext, ExperimentLogic } from '../types'
+﻿import type { ExperimentContext, ExperimentLogic } from '../types'
 import { ChemVisual, litmusColor } from '../../engine/chem'
 
 /**
@@ -150,7 +150,7 @@ export class PrecipitateLogic implements ExperimentLogic {
     const rx = PRECIP_REACTIONS[this.reagent]
     const density = Math.min(1, this.volume / 15)
     this.vis.setLiquid(rx.liquid, 0.3 + (this.volume / 20) * 0.7)
-    this.vis.setPrecipitate(this.volume > 1 ? density : 0, rx.precipitateColor)
+    this.vis.setPrecipitate(this.volume > 1 ? density : 0, rx.precipColor)
     this.ctx.post('result', {
       lines: [
         `反应：${rx.equation}`,
