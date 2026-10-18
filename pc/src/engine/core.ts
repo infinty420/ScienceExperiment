@@ -40,14 +40,14 @@ export class Engine {
     if (this._composite) {
       this._ctx2d = canvas.getContext('2d', { alpha: false, willReadFrequently: true })
       const show = (window as unknown as { __scilabShow?: (m: string) => void }).__scilabShow
-      show?.(this._ctx2d ? '[boot] r3 2d-composite' : '[boot] r3 2d context 创建失败!')
+      show?.(this._ctx2d ? '[boot] r4 2d-composite' : '[boot] r4 2d context 创建失败!')
     }
     // alpha:false 走合成器 opaque 路径；antialias:false 规避 Mali 上 MSAA 合成闪烁
     this.renderer = new THREE.WebGLRenderer({
       canvas: this._glCanvas,
       antialias: false,
-      // 合成模式下同一任务内立即 blit，缓冲必然有效；preserve 在 Mali tiler 上每帧强制整块回写，是帧耗时大头
-      preserveDrawingBuffer: !this._composite,
+      // preserve:true —— ArkWeb 上 readPixels/drawImage 读回依赖保留缓冲（r3 关闭后设备读回全黑，r4 恢复）
+      preserveDrawingBuffer: true,
       alpha: false,
       powerPreference: 'high-performance'
     })
@@ -267,12 +267,18 @@ export class Engine {
         const cp = ctx.getImageData(x, y, 1, 1).data
         const diff = Math.abs(gp[0] - cp[0]) + Math.abs(gp[1] - cp[1]) + Math.abs(gp[2] - cp[2])
         const show = (window as unknown as { __scilabShow?: (m: string) => void }).__scilabShow
-        if (diff > 12) {
+        const g = gp[0] + ',' + gp[1] + ',' + gp[2]
+        const c = cp[0] + ',' + cp[1] + ',' + cp[2]
+        if (gp[0] + gp[1] + gp[2] < 12) {
+          // GL 读回全黑 = 渲染/读回链路本身断了，blit 无源可拷
+          this._blitMode = 'draw'
+          show?.('[blit] GL 读回全黑! gl=' + g + '（期望背景 26,36,48）')
+        } else if (diff > 12) {
           this._blitMode = 'read'
-          show?.('[blit] drawImage 读回失败 diff=' + diff + '，切 readPixels 兜底')
+          show?.('[blit] drawImage 不一致 gl=' + g + ' 2d=' + c + '，切 readPixels')
         } else if (this._blitChecks >= 3) {
           this._blitMode = 'draw'
-          show?.('[blit] drawImage 路径正常')
+          show?.('[blit] drawImage 路径正常 gl=' + g)
         }
       }
       if (this._blitMode !== 'read') return
