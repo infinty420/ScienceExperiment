@@ -7,7 +7,7 @@
     <script>
       // 鸿蒙端渲染降载：Mali GPU 上高分辨率缓冲帧耗时超 VSync 预算 → 送显 buffer 缺失 → 闪烁
       // 1× 渲染分辨率（CSS 尺寸不变，缓冲降 3.6 倍像素量）
-      ;(function () { window.__SCILAB_RENDER_SCALE = 1 })()
+      ;(function () { window.__SCILAB_RENDER_SCALE = 1; window.__SCILAB_COMPOSITE_2D = true })()
       // 诊断预脚本：任何 JS 错误以红底浮层直接显示在页面内（不依赖 nativeBridge）
       ;(function () {
         function show(m) {

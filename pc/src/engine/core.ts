@@ -10,6 +10,10 @@ export type PostFn = (type: string, payload: Record<string, unknown>) => void
 export class Engine {
   canvas: HTMLCanvasElement
   renderer: THREE.WebGLRenderer
+  /** 2D 合成路径：WebGL 渲到离屏画布，每帧 drawImage 到可见 2D 画布（绕开 ArkWeb WebGL 合成面，根治闪屏） */
+  private _glCanvas: HTMLCanvasElement
+  private _ctx2d: CanvasRenderingContext2D | null = null
+  private _composite = false
   scene: THREE.Scene
   camera: THREE.PerspectiveCamera
   clock: THREE.Clock
@@ -31,9 +35,14 @@ export class Engine {
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas
+    this._composite = !!(window as unknown as { __SCILAB_COMPOSITE_2D?: boolean }).__SCILAB_COMPOSITE_2D
+    this._glCanvas = this._composite ? document.createElement('canvas') : canvas
+    if (this._composite) {
+      this._ctx2d = canvas.getContext('2d', { alpha: false })
+    }
     // alpha:false 走合成器 opaque 路径；antialias:false 规避 Mali 上 MSAA 合成闪烁
     this.renderer = new THREE.WebGLRenderer({
-      canvas,
+      canvas: this._glCanvas,
       antialias: false,
       preserveDrawingBuffer: true,
       alpha: false,
@@ -43,11 +52,11 @@ export class Engine {
     const forcedScale = (window as unknown as { __SCILAB_RENDER_SCALE?: number }).__SCILAB_RENDER_SCALE
     this.renderer.setPixelRatio(forcedScale ?? Math.min(window.devicePixelRatio || 1, 2))
     // 上下文丢失诊断（设备端闪烁时可在页面浮层看到原因）
-    canvas.addEventListener('webglcontextlost', (e) => {
+    this._glCanvas.addEventListener('webglcontextlost', (e) => {
       e.preventDefault()
       ;(window as unknown as { __scilabShow?: (m: string) => void }).__scilabShow?.('[contextlost] WebGL 上下文丢失，等待恢复…')
     })
-    canvas.addEventListener('webglcontextrestored', () => {
+    this._glCanvas.addEventListener('webglcontextrestored', () => {
       ;(window as unknown as { __scilabShow?: (m: string) => void }).__scilabShow?.('[contextrestored] WebGL 上下文已恢复')
     })
     // 渲染缩放由构造时的 forcedScale 决定，此处不再重复设置
@@ -194,6 +203,11 @@ export class Engine {
       this._resizeTime = now
     }
     this.renderer.setSize(w, h, false)
+    if (this._ctx2d) {
+      // 可见 2D 画布缓冲与 GL 缓冲保持一致（1:1 拷贝，CSS 尺寸不变）
+      this.canvas.width = this._glCanvas.width
+      this.canvas.height = this._glCanvas.height
+    }
     this.camera.aspect = w / h
     this.camera.updateProjectionMatrix()
     this._dirty = true
@@ -214,9 +228,14 @@ export class Engine {
     if (!this.paused) return
     const dt = (1 / 120) * this.timeScale
     for (const fn of this.updatables) fn(dt)
-    this.renderer.render(this.scene, this.camera)
+    this.renderer.render(this.scene, this.camera); this._blit()
     this._lastRenderT = performance.now()
     this._dirty = false
+  }
+
+  /** 2D 合成：把离屏 GL 画布拷贝到可见画布 */
+  private _blit(): void {
+    if (this._ctx2d) this._ctx2d.drawImage(this._glCanvas, 0, 0)
   }
 
   private _loop(): void {
@@ -244,7 +263,7 @@ export class Engine {
       const step = this._acc
       this._acc = 0
       for (const fn of this.updatables) fn(step)
-      this.renderer.render(this.scene, this.camera)
+      this.renderer.render(this.scene, this.camera); this._blit()
       this._lastRenderT = now
       this._dirty = false
     }
