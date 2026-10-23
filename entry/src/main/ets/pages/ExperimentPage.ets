@@ -109,7 +109,9 @@ struct ExperimentPage {
 
       // V2 全功能实验台（WebView 全屏承载）
       Column() {
-        Web({ src: $rawfile('web/hos.html'), controller: this.webController })
+        // r5：同步渲染模式——Web 内容与 ArkUI 同帧绘制。
+        // 默认 ASYNC_RENDER 异步模式下 WebGL 高负载时送显 buffer 与宿主合成失配 → 黑屏/闪烁（官方已知问题）。
+        Web({ src: $rawfile('web/hos.html'), controller: this.webController, renderMode: RenderMode.SYNC_RENDER })
           .onPageEnd(() => {
             this.pageLoaded = true;
             this.bootExperiment();

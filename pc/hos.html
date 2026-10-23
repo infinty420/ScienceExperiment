@@ -5,9 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
     <title>智实验 SciLab</title>
     <script>
-      // 鸿蒙端渲染降载：Mali GPU 上高分辨率缓冲帧耗时超 VSync 预算 → 送显 buffer 缺失 → 闪烁
+      // r5 定案：离屏 canvas 在 ArkWeb 上 WebGL 读回全黑（r3/r4 设备证据，preserve 也救不了），
+      // 2D 合成路线废弃，回直连 GL canvas + preserve:true（38a5a33 已验证设备有画面）。
+      // 闪屏治理移至 ArkTS 侧：Web 组件 renderMode(SYNC) 同步渲染。
       // 1× 渲染分辨率（CSS 尺寸不变，缓冲降 3.6 倍像素量）
-      ;(function () { window.__SCILAB_RENDER_SCALE = 1; window.__SCILAB_COMPOSITE_2D = true })()
+      ;(function () { window.__SCILAB_RENDER_SCALE = 1; window.__SCILAB_COMPOSITE_2D = false })()
       // 诊断预脚本：任何 JS 错误以红底浮层直接显示在页面内（不依赖 nativeBridge）
       ;(function () {
         function show(m) {
