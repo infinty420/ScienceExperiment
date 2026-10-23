@@ -39,9 +39,11 @@ export class Engine {
     this._glCanvas = this._composite ? document.createElement('canvas') : canvas
     if (this._composite) {
       this._ctx2d = canvas.getContext('2d', { alpha: false, willReadFrequently: true })
-      const show = (window as unknown as { __scilabShow?: (m: string) => void }).__scilabShow
-      show?.(this._ctx2d ? '[boot] r4 2d-composite' : '[boot] r4 2d context 创建失败!')
     }
+    // r5：boot 标记无条件输出（直连/合成均显示，截图可确认装的是新包）
+    ;(window as unknown as { __scilabShow?: (m: string) => void }).__scilabShow?.(
+      this._ctx2d ? '[boot] r5 2d-composite' : '[boot] r5 direct-gl preserve'
+    )
     // alpha:false 走合成器 opaque 路径；antialias:false 规避 Mali 上 MSAA 合成闪烁
     this.renderer = new THREE.WebGLRenderer({
       canvas: this._glCanvas,
