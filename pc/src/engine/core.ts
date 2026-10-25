@@ -40,9 +40,12 @@ export class Engine {
     if (this._composite) {
       this._ctx2d = canvas.getContext('2d', { alpha: false, willReadFrequently: true })
     }
-    // r5：boot 标记无条件输出（直连/合成均显示，截图可确认装的是新包）
+    // r6：boot 标记无条件输出（含渲染 scale，截图可确认装的是新包）
+    const bootScale = (window as unknown as { __SCILAB_RENDER_SCALE?: number }).__SCILAB_RENDER_SCALE
     ;(window as unknown as { __scilabShow?: (m: string) => void }).__scilabShow?.(
-      this._ctx2d ? '[boot] r5 2d-composite' : '[boot] r5 direct-gl preserve'
+      this._ctx2d
+        ? '[boot] r6 2d-composite'
+        : '[boot] r6 direct-gl preserve scale=' + (bootScale ?? 'auto')
     )
     // alpha:false 走合成器 opaque 路径；antialias:false 规避 Mali 上 MSAA 合成闪烁
     this.renderer = new THREE.WebGLRenderer({
@@ -218,10 +221,10 @@ export class Engine {
     this._dirty = true
   }
 
-  private _perfStart = performance.now()
   private _perfAcc = 0
   private _perfN = 0
-  private _perfDone = false
+  private _perfMax = 0
+  private _perfWinStart = performance.now()
 
   private _lastW = 0
   private _lastH = 0
@@ -318,10 +321,10 @@ export class Engine {
     this._acc += dt
     if (dt > 0) this.onFrame?.(dt)
 
-    // 按需渲染：交互/参数变化即时画；运行中封顶 30fps；空闲每 500ms 心跳一帧
+    // 按需渲染：交互/参数变化即时画；运行中封顶 30fps；空闲 5s 心跳（r6：静态画面零重绘防闪）
     const now = performance.now()
     const active = dt > 0 || this._dirty
-    const due = active ? now - this._lastRenderT >= 33 : now - this._lastRenderT >= 500
+    const due = active ? now - this._lastRenderT >= 33 : now - this._lastRenderT >= 5000
     if (active || due) {
       const step = this._acc
       this._acc = 0
@@ -329,15 +332,21 @@ export class Engine {
       for (const fn of this.updatables) fn(step)
       this.renderer.render(this.scene, this.camera); this._blit()
       this._lastRenderT = now
-      // 帧耗时探针：5 秒窗口上报一次平均帧成本（设备端定位 VSync 超支用）
-      if (!this._perfDone) {
-        this._perfAcc += performance.now() - rt0
+      // 帧耗时探针 r6：滚动 5s 窗口持续上报 avg/max + fps（截图任意时刻红条都有数据）
+      {
+        const cost = performance.now() - rt0
+        this._perfAcc += cost
+        if (cost > this._perfMax) this._perfMax = cost
         this._perfN++
-        if (rt0 - this._perfStart > 5000 && this._perfN > 5) {
-          this._perfDone = true
+        if (now - this._perfWinStart > 5000 && this._perfN > 3) {
           ;(window as unknown as { __scilabShow?: (m: string) => void }).__scilabShow?.(
-            '[perf] 平均帧耗时 ' + (this._perfAcc / this._perfN).toFixed(1) + 'ms (n=' + this._perfN + ')'
+            '[perf] avg ' + (this._perfAcc / this._perfN).toFixed(1) +
+            'ms max ' + this._perfMax.toFixed(1) + 'ms fps=' + this.fps + ' (n=' + this._perfN + ')'
           )
+          this._perfWinStart = now
+          this._perfAcc = 0
+          this._perfN = 0
+          this._perfMax = 0
         }
       }
       this._dirty = false
