@@ -113,6 +113,10 @@ struct ExperimentPage {
         // 默认 ASYNC_RENDER 异步模式下 WebGL 高负载时送显 buffer 与宿主合成失配 → 黑屏/闪烁（官方已知问题）。
         Web({ src: $rawfile('web/hos.html'), controller: this.webController, renderMode: RenderMode.SYNC_RENDER })
           .onPageEnd(() => {
+            // r7：ArkWeb onPageEnd 可能双触发，boot 幂等守卫（重复 boot 会重建实验台产生双引擎）
+            if (this.pageLoaded) {
+              return;
+            }
             this.pageLoaded = true;
             this.bootExperiment();
           })

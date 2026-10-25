@@ -4,6 +4,9 @@ import ExperimentStage from '../components/ExperimentStage.vue'
 
 const expId = ref('w1.demo')
 const title = ref('实验台')
+// r7：boot 前不挂载实验台——初始 key('w1.demo') 与 boot 后真实 id 不同会触发 :key 重建，
+// 若首挂即渲染 ExperimentStage 必产生双引擎（旧 dispose 失效成僵尸循环，双 WebGL context → 闪屏）
+const booted = ref(false)
 
 function postToNative(type: string, payload: Record<string, unknown>): void {
   const w = window as unknown as { nativeBridge?: { onMessage: (m: string) => void } }
@@ -17,6 +20,7 @@ onMounted(() => {
   w.__hosBoot = (id: string, t: string) => {
     expId.value = id
     title.value = t
+    booted.value = true
   }
   // 通知原生壳：引擎就绪
   postToNative('engine.ready', { three: 'v2' })
@@ -28,8 +32,8 @@ function onBack(): void {
 </script>
 
 <template>
-  <!-- key=expId：实验切换时强制重建实验台（ExperimentStage 仅在挂载时读取 experimentId） -->
-  <ExperimentStage :key="expId" :experiment-id="expId" :title="title" @back="onBack" />
+  <!-- v-if=booted：boot 前不渲染，杜绝初始引擎；key=expId：实验切换时强制重建（ExperimentStage 仅在挂载时读取 experimentId） -->
+  <ExperimentStage v-if="booted" :key="expId" :experiment-id="expId" :title="title" @back="onBack" />
 </template>
 
 <style>

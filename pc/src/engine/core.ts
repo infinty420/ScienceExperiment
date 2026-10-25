@@ -40,12 +40,12 @@ export class Engine {
     if (this._composite) {
       this._ctx2d = canvas.getContext('2d', { alpha: false, willReadFrequently: true })
     }
-    // r6：boot 标记无条件输出（含渲染 scale，截图可确认装的是新包）
+    // r7：boot 标记无条件输出（含渲染 scale，截图可确认装的是新包）
     const bootScale = (window as unknown as { __SCILAB_RENDER_SCALE?: number }).__SCILAB_RENDER_SCALE
     ;(window as unknown as { __scilabShow?: (m: string) => void }).__scilabShow?.(
       this._ctx2d
-        ? '[boot] r6 2d-composite'
-        : '[boot] r6 direct-gl preserve scale=' + (bootScale ?? 'auto')
+        ? '[boot] r7 2d-composite'
+        : '[boot] r7 direct-gl preserve scale=' + (bootScale ?? 'auto')
     )
     // alpha:false 走合成器 opaque 路径；antialias:false 规避 Mali 上 MSAA 合成闪烁
     this.renderer = new THREE.WebGLRenderer({
@@ -305,6 +305,8 @@ export class Engine {
   }
 
   private _loop(): void {
+    // r7：dispose 停转检查——此前 rAF 无条件续排且不查 running，dispose 后僵尸引擎永远渲（离屏 canvas），双 context 并行导致闪屏
+    if (!this.running) return
     requestAnimationFrame(this._loop)
     const rawDt = Math.min(this.clock.getDelta(), 0.05)
 
