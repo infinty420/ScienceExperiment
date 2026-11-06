@@ -11,7 +11,8 @@
     "tauri": "tauri",
     "typecheck": "tsc --noEmit",
     "test": "node scripts/run-tests.mjs",
-    "test:ci": "npm run typecheck && npm test"
+    "test:ci": "npm run typecheck && npm test",
+    "check:licenses": "node scripts/check-licenses.mjs"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.1.0",
@@ -22,6 +23,7 @@
   "devDependencies": {
     "@tauri-apps/cli": "^2.1.0",
     "@vitejs/plugin-vue": "^5.1.2",
+    "esbuild": "^0.21.5",
     "typescript": "^5.5.4",
     "vite": "^5.4.2"
   }

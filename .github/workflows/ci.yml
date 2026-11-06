@@ -39,3 +39,9 @@ jobs:
 
       - name: 实验包 DSL 体检
         run: node scripts/check-packages.mjs
+
+      - name: 依赖许可证巡检（含隐式导入检查）
+        run: npm run check:licenses
+
+      - name: 技能包结构自检
+        run: node ../skills/compliant-lab-upgrade/scripts/validate_skill.mjs ../skills/compliant-lab-upgrade

@@ -8,7 +8,7 @@ import CompareChart, { type CompareSet } from './components/CompareChart.vue'
 import StatsDashboard from './components/StatsDashboard.vue'
 import ResearchLab from './components/ResearchLab.vue'
 import LearningCenter from './components/LearningCenter.vue'
-import { getProgress, overallProgress, weakExperiments } from './store/progress'
+import { overallProgress, weakExperiments, hydrateProgress } from './store/progress'
 import { labDB } from './learning/db'
 import { packageStats } from './experiments/packages'
 import appIcon from './assets/app-icon.png'
@@ -122,7 +122,7 @@ function openFromLearning(id: string): void {
 onMounted(async () => {
   await labDB.init()
   await labDB.migrateLegacy()
-  getProgress()
+  await hydrateProgress()
   dataVersion.value++
 })
 

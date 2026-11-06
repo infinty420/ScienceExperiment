@@ -16,9 +16,10 @@
 | 可复现性与报告 | 纯 TS SHA-256、实验快照 v3（导出/导入/校验/逐点复跑比对）、报告 3.0（Markdown / 自包含 HTML+SVG / CSV） | `pc/src/learning/snapshot.ts` `pc/src/report/` |
 | 助教 2.0 | BM25 离线检索（中文二元字 gram）、LaTeX 子集渲染、数据诊断规则、可插拔大模型适配器 | `pc/src/assistant/` |
 | 界面 | 数值研究台、学习中心、实验台「数据分析 / 保存快照 / 报告 3.0」、薄弱实验推荐条 | `pc/src/components/ResearchLab.vue` `LearningCenter.vue` `ExperimentStage.vue` `App.vue` |
-| 工程化 | `typecheck` / `test`（esbuild + Node 内置 `node:test`，零新依赖）/ CI / README / 第三方声明 / 合规调研报告 | `pc/scripts/run-tests.mjs` `.github/workflows/ci.yml` `docs/` |
+| 工程化 | `typecheck` / `test`（esbuild + Node 内置 `node:test`，零新依赖）/ 依赖许可证巡检 / CI / README / 第三方声明 / 合规调研报告 / 可分发技能包 | `pc/scripts/run-tests.mjs` `pc/scripts/check-licenses.mjs` `.github/workflows/ci.yml` `skills/` `docs/` |
+| V3.1 方案补遗 | `progress.ts` 转发到 IndexedDB 持久层（同步 API 不变、按学习者档案隔离、V2 数据自动迁移）；`skills/` 技能包入库并接入 CI；依赖 SPDX 巡检与隐式导入检查 | `pc/src/store/progress.ts` `pc/tests/progress-bridge.test.ts` `skills/compliant-lab-upgrade/` |
 
-**验证结果**：`npx tsc --noEmit` 零错误；`npm test` 59 项测试全通过；`npm run build`（PC）与 `npx vite build --config vite.hos.config.ts`（鸿蒙）均成功。
+**验证结果**：`npx tsc --noEmit` 零错误；`npm test` 63 项测试全通过；实验包体检 27 包 + 8 题库 0 错误；许可证巡检 94 个依赖 0 禁止 / 0 待复核 / 0 隐式导入；`npm run build`（PC）与 `npx vite build --config vite.hos.config.ts`（鸿蒙）均成功。
 
 ---
 
@@ -42,6 +43,7 @@ pc/
 ├── src-tauri/           Tauri 2 Rust 壳
 └── tests/               59 项单元测试
 entry/                   HarmonyOS ArkTS 壳 + rawfile/web/hos.html（构建产物）
+skills/                 可分发 AgentSkill：合规调研 + 高深度升级工作流（CI 自检）
 docs/                    总体方案、升级方案 V2/V3、GitHub 开源项目调研与合规报告
 ```
 
@@ -56,6 +58,7 @@ cd pc && npm install && npm run dev
 # 质量检查与构建
 npm run typecheck       # tsc --noEmit
 npm test                # esbuild 打包 TS 测试 + node --test
+npm run check:licenses  # 依赖 SPDX 巡检 + 隐式导入检查（合规红线）
 npm run build           # PC 生产构建 → pc/dist
 npm run tauri build     # Windows 桌面安装包（NSIS）
 
@@ -117,5 +120,6 @@ python pc/scripts/inline_hos.py entry/src/main/resources/rawfile/web
 | 阶段 | 状态 |
 |---|---|
 | V1–V2（27 个实验、3D 引擎、虚拟仪器、对照实验、考核、题库、诊断、参数扫描） | 已完成 |
-| V3（科学计算内核、DSL v2、学习科学闭环、报告 3.0、助教 2.0、工程化） | 已完成（本轮） |
+| V3（科学计算内核、DSL v2、学习科学闭环、报告 3.0、助教 2.0、工程化） | 已完成 |
+| V3.1（方案补遗：`progress.ts` 持久层转发、`skills/` 入库、依赖 SPDX 巡检） | 已完成（本轮） |
 | 后续候选 | 多用户/教师端与班级任务、端侧大模型适配器实装、实验包市场、鸿蒙原生 3D 渲染评估 |

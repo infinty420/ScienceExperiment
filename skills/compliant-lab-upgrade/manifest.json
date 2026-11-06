@@ -1,0 +1,52 @@
+{
+  "name": "compliant-lab-upgrade",
+  "displayName": "开源合规的深度升级工作台",
+  "version": "1.0.0",
+  "description": "GitHub 相似项目检索 + LICENSE 全文取证 + SPDX 合规分级 + 平台无关数值内核/实验包 DSL/学习闭环/报告 3.0/工程化验收的端到端升级工作流。适用于教育科研仿真、虚拟实验与数据分析类项目。",
+  "author": "ScienceExperiment Project",
+  "license": "Proprietary",
+  "entry": "SKILL.md",
+  "complexity": "advanced",
+  "tags": [
+    "open-source-compliance",
+    "license-audit",
+    "spdx",
+    "github-research",
+    "scientific-computing",
+    "simulation",
+    "virtual-lab",
+    "dsl",
+    "engineering-workflow",
+    "typescript"
+  ],
+  "categories": ["engineering", "compliance", "education"],
+  "requires": {
+    "runtime": "node>=18",
+    "tools": ["filesystem", "shell", "network"],
+    "externalDependencies": []
+  },
+  "contents": {
+    "scripts": [
+      "scripts/gh_license_audit.mjs",
+      "scripts/package_check.mjs",
+      "scripts/validate_skill.mjs"
+    ],
+    "references": [
+      "references/research-workflow.md",
+      "references/compliance.md",
+      "references/upgrade-blueprint.md",
+      "references/dsl-v2.md",
+      "references/acceptance.md"
+    ],
+    "assets": [
+      "assets/scene-template.json",
+      "assets/THIRD_PARTY_NOTICES.template.md"
+    ]
+  },
+  "provenance": {
+    "origin": "Distilled from a real V3 upgrade of an educational virtual-lab project (2026-11-06).",
+    "thirdPartyCode": "none",
+    "thirdPartyAssets": "none",
+    "note": "All scripts in this package are original work. Referenced open-source projects are cited for ideas only; no source code, assets, names or trademarks were copied."
+  }
+}

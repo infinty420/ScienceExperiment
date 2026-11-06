@@ -25,9 +25,18 @@
 | `@vitejs/plugin-vue` | 5.2.4 | MIT | Vue SFC 编译 |
 | `typescript` | 5.9.3 | Apache-2.0 | 类型检查 |
 | `@tauri-apps/cli` | 2.12.2 | Apache-2.0 OR MIT | Tauri 打包 CLI |
-| `esbuild` | 0.21.5 | MIT | Vite 传递依赖；也被 `pc/scripts/run-tests.mjs` 用于打包测试 |
+| `esbuild` | 0.21.5 | MIT | **已显式声明**为 devDependency；被 `pc/scripts/run-tests.mjs` 打包测试、`pc/scripts/check-packages.mjs` 打包校验器 |
 
 **测试框架**：Node.js 内置 `node:test` + `node:assert/strict`（Node 22），无 vitest/jest，无新增许可证义务。
+
+### 2.1 自动化许可证巡检（V3.1）
+
+`npm run check:licenses`（`pc/scripts/check-licenses.mjs`，纯 Node 零依赖）读取 `package-lock.json` v3 的 `license` 字段，并已接入 `.github/workflows/ci.yml`：
+
+- 按 SPDX 分级：宽松许可放行；GPL / AGPL / LGPL / SSPL / EUPL / CeCILL / MPL / EPL / CDDL / CC-BY-NC 等**一律禁止**；`NOASSERTION` / 缺失 / 未收录标识**一律待复核**，绝不默认可用。
+- 同时检查源码是否直接导入了**未在 `package.json` 声明**的包（隐式传递依赖风险）；V3.1 据此把原本隐式使用的 `esbuild` 显式声明到 `devDependencies`，未引入任何新包。
+- 当前实测：**94 个依赖，允许 94 / 禁止 0 / 待复核 0 / 隐式导入 0**。SPDX 分布：MIT 77、Apache-2.0 OR MIT 13、BSD-2-Clause 1、ISC 1、BSD-3-Clause 1、Apache-2.0 1。
+- 可用 `--all` 打印完整清单、`--strict` 让待复核项也失败、`--json <path>` 导出留档。
 
 ## 3. Rust 侧依赖（`pc/src-tauri/Cargo.toml`）
 
@@ -89,5 +98,5 @@
 
 1. 未来若要复用 MIT / Apache-2.0 项目代码片段：保留原版权声明、许可证全文，新增 `NOTICE` 条目，并在 `docs/` 记录来源文件与 commit。
 2. 任何 GPL / AGPL / LGPL 代码、资源、图标不得进入 `pc/src`、`pc/experiments` 或鸿蒙 `rawfile/web` 产物。
-3. 新增 npm 依赖前先核查 SPDX；打包分发时重新生成本文件第 1–3 节。
+3. 新增 npm 依赖前先核查 SPDX —— **已由 `npm run check:licenses` 在 CI 中强制**（含隐式导入检查）；打包分发时重新生成本文件第 1–3 节。
 4. 公开发布前：为项目本体选定许可证；处理 §5.2 的 Scilab 名称区分问题。

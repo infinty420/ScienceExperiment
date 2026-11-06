@@ -5,7 +5,7 @@
  */
 import { ref, computed, onMounted } from 'vue'
 import { EXPERIMENTS } from '../data/experiments'
-import { getProgress, overallProgress, weakExperiments } from '../store/progress'
+import { getProgress, overallProgress, weakExperiments, hydrateProgress, switchProgressProfile } from '../store/progress'
 import { labDB, ensureDefaultProfile, activeProfileId, setActiveProfile, type Profile } from '../learning/db'
 import { masteryPercent, retrievability, type MasteryRecord } from '../learning/mastery'
 import { reviewMistake, dueMistakes, mistakeStats, type MistakeCard } from '../learning/mistakes'
@@ -36,7 +36,12 @@ const qaSources = ref<string[]>([])
 
 const experimentIds = computed(() => EXPERIMENTS.filter((e) => e.available).map((e) => e.id))
 const titleOf = (id: string): string => EXPERIMENTS.find((e) => e.id === id)?.title ?? id
-const progressMap = computed(() => getProgress())
+/** 进度来自同步桥，非响应式；用 tick 在 hydrate / 切档案后强制刷新视图 */
+const progressTick = ref(0)
+const progressMap = computed(() => {
+  void progressTick.value
+  return getProgress()
+})
 
 const plan = computed<StudyPlan>(() => buildStudyPlan({
   experimentIds: experimentIds.value,
@@ -48,7 +53,10 @@ const plan = computed<StudyPlan>(() => buildStudyPlan({
 }))
 const dueCards = computed(() => dueMistakes(cards.value, Date.now()))
 const cardStats = computed(() => mistakeStats(cards.value, Date.now()))
-const weakList = computed(() => weakExperiments())
+const weakList = computed(() => {
+  void progressTick.value
+  return weakExperiments()
+})
 const pkgStats = computed(() => packageStats())
 const imported = computed(() => listPackages('imported'))
 
@@ -70,6 +78,8 @@ async function refresh(): Promise<void> {
   await ensureDefaultProfile()
   profiles.value = await labDB.getAll<Profile>('profiles')
   activeId.value = await activeProfileId()
+  await hydrateProgress(activeId.value)
+  progressTick.value++
   const attempts = await labDB.getAll<MasteryRecord & { knowledgeKey?: string }>('attempts')
   mastery.value = attempts.filter((r) => r && typeof r.pKnown === 'number' && r.knowledgeKey)
   cards.value = await labDB.getAll<MistakeCard>('cards')
@@ -107,6 +117,8 @@ async function addProfile(): Promise<void> {
 async function switchProfile(id: string): Promise<void> {
   await setActiveProfile(id)
   activeId.value = id
+  await switchProgressProfile(id)
+  progressTick.value++
   message.value = `已切换到 ${profiles.value.find((p) => p.id === id)?.name ?? id}`
 }
 
