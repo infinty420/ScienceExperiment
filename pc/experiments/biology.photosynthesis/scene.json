@@ -1,16 +1,87 @@
 {
   "id": "biology.photosynthesis",
   "title": "光合作用过程模拟",
-  "camera": { "position": [4, 3.5, 6], "target": [0, 2, 0] },
+  "camera": {
+    "position": [
+      4,
+      3.5,
+      6
+    ],
+    "target": [
+      0,
+      2,
+      0
+    ]
+  },
   "objects": [],
   "params": [
-    { "id": "light", "label": "光照强度", "min": 0, "max": 10, "step": 0.5, "value": 5, "unit": "klx" },
-    { "id": "co2", "label": "CO₂ 浓度", "min": 0, "max": 3, "step": 0.1, "value": 1, "unit": "%" }
+    {
+      "id": "light",
+      "label": "光照强度",
+      "min": 0,
+      "max": 10,
+      "step": 0.5,
+      "value": 5,
+      "unit": "klx"
+    },
+    {
+      "id": "co2",
+      "label": "CO₂ 浓度",
+      "min": 0,
+      "max": 3,
+      "step": 0.1,
+      "value": 1,
+      "unit": "%"
+    }
   ],
   "records": [
-    { "id": "L", "label": "光强 (klx)", "digits": 1 },
-    { "id": "R", "label": "相对速率", "digits": 3 }
+    {
+      "id": "L",
+      "label": "光强 (klx)",
+      "digits": 1
+    },
+    {
+      "id": "R",
+      "label": "相对速率",
+      "digits": 3
+    }
   ],
-  "curve": { "x": "L", "y": "R", "title": "光合速率 – 光照强度（先升后饱和）" },
-  "guide": "水中金鱼藻在光照下释放 O₂ 气泡，气泡快慢代表光合速率。增大光强或 CO₂ 浓度，速率上升并趋于饱和（受叶绿体酶数量限制）。反应式：6CO₂ + 6H₂O → C₆H₁₂O₆ + 6O₂（光照/叶绿体）。"
+  "curve": {
+    "x": "L",
+    "y": "R",
+    "title": "光合速率 – 光照强度（先升后饱和）"
+  },
+  "guide": "水中金鱼藻在光照下释放 O₂ 气泡，气泡快慢代表光合速率。增大光强或 CO₂ 浓度，速率上升并趋于饱和（受叶绿体酶数量限制）。反应式：6CO₂ + 6H₂O → C₆H₁₂O₆ + 6O₂（光照/叶绿体）。",
+  "meta": {
+    "dslVersion": "2.0.0",
+    "version": "1.0.0",
+    "subject": "biology",
+    "difficulty": 2,
+    "authors": [
+      "智实验项目组"
+    ],
+    "license": "Proprietary",
+    "attribution": [
+      {
+        "project": "本项目原创",
+        "license": "Proprietary",
+        "kind": "idea",
+        "note": "场景、数据与逻辑均为本项目独立实现，未复用第三方代码或资源"
+      }
+    ],
+    "pedagogy": {
+      "objectives": [
+        "光合作用过程模拟"
+      ],
+      "competencies": [
+        "观察与测量",
+        "数据处理",
+        "误差分析"
+      ]
+    },
+    "tags": [
+      "biology",
+      "V3"
+    ]
+  }
 }

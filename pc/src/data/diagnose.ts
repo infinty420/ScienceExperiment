@@ -64,7 +64,7 @@ const RULES: Rule[] = [
   {
     id: 'low-r2',
     when: (c) => c.fitR2 !== null && c.fitR2 < 0.95,
-    make: () => ({
+    make: (c) => ({
       id: 'low-r2',
       level: 'info',
       title: '线性拟合优度偏低',

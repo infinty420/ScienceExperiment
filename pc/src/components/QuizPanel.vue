@@ -14,6 +14,8 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'done', r: { correct: number; total: number }): void
+  /** V3：逐题作答明细，供 BKT 掌握度与错题本消费 */
+  (e: 'answers', list: Array<{ q: string; options: string[]; answer: number; chosen: number; explain: string; knowledge?: string }>): void
   (e: 'close'): void
 }>()
 
@@ -37,6 +39,14 @@ function next(): void {
     picked.value = answers.value[idx.value] ?? null
   } else {
     finished.value = true
+    emit('answers', props.questions.map((qq, i) => ({
+      q: qq.q,
+      options: qq.options,
+      answer: qq.answer,
+      chosen: answers.value[i] ?? -1,
+      explain: qq.explain,
+      knowledge: qq.knowledge
+    })))
     emit('done', { correct: correctCount.value, total: props.questions.length })
   }
 }

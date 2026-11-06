@@ -91,5 +91,80 @@
       "digits": 2,
       "recordColumn": "t"
     }
-  ]
+  ],
+  "meta": {
+    "dslVersion": "2.0.0",
+    "version": "1.0.0",
+    "subject": "physics",
+    "difficulty": 2,
+    "authors": [
+      "智实验项目组"
+    ],
+    "license": "Proprietary",
+    "attribution": [
+      {
+        "project": "myphysicslab/myphysicslab",
+        "license": "Apache-2.0",
+        "kind": "algorithm",
+        "url": "https://github.com/myphysicslab/myphysicslab",
+        "note": "参考求解器分层抽象；Verlet/RK4 为公开数值方法独立实现"
+      }
+    ],
+    "pedagogy": {
+      "objectives": [
+        "简谐振动（弹簧振子）"
+      ],
+      "competencies": [
+        "观察与测量",
+        "数据处理",
+        "误差分析"
+      ]
+    },
+    "tags": [
+      "physics",
+      "V3"
+    ]
+  },
+  "solver": {
+    "kind": "ode",
+    "solver": "verlet",
+    "dt": 0.005,
+    "tEnd": 10,
+    "equations": [
+      "v",
+      "-(k/m)*x"
+    ],
+    "stateNames": [
+      "x",
+      "v"
+    ],
+    "paramNames": [
+      "k",
+      "m"
+    ],
+    "initial": [
+      1,
+      0
+    ],
+    "energy": "0.5*m*v^2 + 0.5*k*x^2",
+    "events": [
+      {
+        "id": "equilibrium",
+        "expression": "x"
+      }
+    ],
+    "note": "弹簧振子二阶系统；切换求解器可对比能量漂移"
+  },
+  "analysis": {
+    "fit": {
+      "model": "linear",
+      "xColumn": "t",
+      "yColumn": "x"
+    },
+    "spectrum": {
+      "column": "x",
+      "sampleRate": 200
+    },
+    "outliers": false
+  }
 }

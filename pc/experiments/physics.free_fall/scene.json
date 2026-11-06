@@ -110,5 +110,78 @@
       "开始实验",
       "仪器读数"
     ]
+  },
+  "meta": {
+    "dslVersion": "2.0.0",
+    "version": "1.0.0",
+    "subject": "physics",
+    "difficulty": 2,
+    "authors": [
+      "智实验项目组"
+    ],
+    "license": "Proprietary",
+    "attribution": [
+      {
+        "project": "novasolver/physics-simulators",
+        "license": "MIT",
+        "kind": "idea",
+        "url": "https://github.com/novasolver/physics-simulators",
+        "note": "参考「参数—求解—可视化」统一模板组织实验"
+      }
+    ],
+    "pedagogy": {
+      "objectives": [
+        "自由落体运动测定"
+      ],
+      "competencies": [
+        "观察与测量",
+        "数据处理",
+        "误差分析"
+      ]
+    },
+    "tags": [
+      "physics",
+      "V3"
+    ]
+  },
+  "solver": {
+    "kind": "ode",
+    "solver": "rk4",
+    "dt": 0.02,
+    "tEnd": 2,
+    "equations": [
+      "v",
+      "-gravity"
+    ],
+    "stateNames": [
+      "y",
+      "v"
+    ],
+    "paramNames": [
+      "gravity"
+    ],
+    "initial": [
+      10,
+      0
+    ],
+    "note": "自由落体 y″=-g；v-t 线性拟合斜率即重力加速度"
+  },
+  "analysis": {
+    "fit": {
+      "model": "linear",
+      "xColumn": "t",
+      "yColumn": "v"
+    },
+    "uncertainty": {
+      "expression": "2*h/t^2",
+      "params": [
+        "h",
+        "t"
+      ],
+      "sigmas": [
+        0.01,
+        0.02
+      ]
+    }
   }
 }

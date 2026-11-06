@@ -3,6 +3,7 @@
     "pages/Index",
     "pages/LabListPage",
     "pages/ExperimentPage",
-    "pages/SettingsPage"
+    "pages/SettingsPage",
+    "pages/Scene3dPocPage"
   ]
 }

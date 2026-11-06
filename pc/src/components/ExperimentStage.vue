@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref, computed } from 'vue'
 import { Engine } from '../engine/core'
-import { getSceneDef, getQuiz, buildExperiment } from '../experiments/loader'
+import { getSceneDef, getQuiz, buildExperiment, allSceneIds } from '../experiments/loader'
 import type { PhysicsWorld } from '../engine/physics'
 import type { ExperimentLogic, ParamDef, RecordColumn, Row, InstrumentDef, OpEvent, ExamGoal } from '../experiments/types'
 import { sigmaOf, gaussNoise } from '../engine/stat'
@@ -15,6 +15,19 @@ import { saveHistory } from '../store/history'
 import { markDone, markQuiz } from '../store/progress'
 import { searchFaq } from '../data/faq'
 import { diagnoseNew, diagnose, type Diagnosis } from '../data/diagnose'
+/* ───── V3：科学计算内核 / 报告 3.0 / 学习闭环接线 ───── */
+import { linearFit, polynomialFit, nonlinearFit, type FitResult } from '../kernel/fit'
+import { dominantFrequency, outliersIQR, propagateUncertainty, monteCarloUncertainty } from '../kernel/stats'
+import { evaluate } from '../kernel/expr'
+import { buildReport as buildReportV3 } from '../report/builder'
+import { toHTML as reportToHTML, toMarkdown as reportToMarkdown, downloadFile } from '../report/export'
+import { createSnapshot } from '../learning/snapshot'
+import { labDB } from '../learning/db'
+import { newMastery, updateMastery, type MasteryRecord } from '../learning/mastery'
+import { collectMistakes, type MistakeCard } from '../learning/mistakes'
+import { knowledgeKey } from '../learning/recommend'
+import { AssistantEngine } from '../assistant/engine'
+import { docsFromScenes } from '../assistant/retrieval'
 
 const props = defineProps<{ experimentId: string; title: string; compact?: boolean }>()
 const emit = defineEmits<{ (e: 'back'): void }>()
@@ -273,6 +286,135 @@ function onQuizDone(r: { correct: number; total: number }): void {
   if (!quizOpen.value) return
   const pct = r.total > 0 ? Math.round((r.correct / r.total) * 100) : 0
   markQuiz(props.experimentId, quizOpen.value, pct)
+}
+
+/* ───── V3：数据分析 / 可复现快照 / 报告 3.0 / 学习闭环 ───── */
+interface QuizAnswerDetail {
+  q: string
+  options: string[]
+  answer: number
+  chosen: number
+  explain: string
+  knowledge?: string
+}
+
+const analysisOpen = ref(false)
+const analysisFit = ref<FitResult | null>(null)
+const analysisFreq = ref('')
+const analysisGum = ref('')
+const analysisOutliers = ref<number[]>([])
+const analysisMsg = ref('')
+
+function columnIndex(id: string | undefined, fallback: number): number {
+  if (!id) return fallback
+  const i = columns.value.findIndex((c) => c.id === id)
+  return i >= 0 ? i : fallback
+}
+
+function openAnalysis(): void {
+  analysisOpen.value = true
+  const def = getSceneDef(props.experimentId)
+  const spec = def?.analysis
+  analysisFit.value = null
+  analysisFreq.value = ''
+  analysisGum.value = ''
+  analysisOutliers.value = []
+  const data = rows.value
+  if (data.length < 3) { analysisMsg.value = '至少需要 3 组数据才能进行定量分析。'; return }
+  const xi = columnIndex(spec?.fit?.xColumn, 0)
+  const yi = columnIndex(spec?.fit?.yColumn, Math.min(1, (data[0]?.length ?? 1) - 1))
+  const x = data.map((r) => r[xi] ?? 0)
+  const y = data.map((r) => r[yi] ?? 0)
+  const model = spec?.fit?.model ?? 'linear'
+  try {
+    if (model === 'polynomial') analysisFit.value = polynomialFit(x, y, spec?.fit?.degree ?? 2)
+    else if (model === 'michaelis') analysisFit.value = nonlinearFit((s, p) => p[0] * s / (p[1] + s), x, y, [Math.max(...y), 1])
+    else if (model === 'exponential') analysisFit.value = nonlinearFit((t, p) => p[0] * Math.exp(-p[1] * t) + p[2], x, y, [y[0], 0.5, 0])
+    else analysisFit.value = linearFit(x, y)
+  } catch (e) { analysisMsg.value = `拟合失败：${e instanceof Error ? e.message : String(e)}` }
+  analysisOutliers.value = outliersIQR(y)
+  if (y.length >= 16) {
+    const fs = spec?.spectrum?.sampleRate ?? 100
+    const dom = dominantFrequency(y, fs)
+    analysisFreq.value = dom ? `主频 ${dom.freq.toFixed(4)} Hz · 周期 ${dom.period.toFixed(4)} s · 幅值 ${dom.amplitude.toFixed(4)}` : '未检测到显著周期成分'
+  }
+  if (spec?.uncertainty) {
+    const u = spec.uncertainty
+    const names = u.params
+    const nominal = names.map((n) => paramValues.value[n] ?? 1)
+    const f = (q: number[]) => {
+      const vars: Record<string, number> = {}
+      names.forEach((n, i) => { vars[n] = q[i] })
+      return evaluate(u.expression, vars)
+    }
+    try {
+      const gum = propagateUncertainty(f, nominal, u.sigmas)
+      const mc = monteCarloUncertainty(f, nominal, u.sigmas, props.experimentId, 4000)
+      analysisGum.value = `GUM：${gum.value.toFixed(5)} ± ${gum.sigma.toFixed(5)}（相对 ${(gum.relative * 100).toFixed(2)}%）；蒙特卡洛：${mc.mean.toFixed(5)} ± ${mc.sd.toFixed(5)}，95% 区间 [${mc.ci95[0].toFixed(5)}, ${mc.ci95[1].toFixed(5)}]`
+    } catch (e) { analysisGum.value = `不确定度评定失败：${e instanceof Error ? e.message : String(e)}` }
+  }
+  analysisMsg.value = `已分析 ${data.length} 组数据（模型 ${model}）。`
+}
+
+function currentSnapshot() {
+  const def = getSceneDef(props.experimentId)
+  return createSnapshot({
+    experimentId: props.experimentId,
+    title: props.title,
+    params: { ...paramValues.value },
+    paramLabels: Object.fromEntries(params.value.map((p) => [p.id, p.label])),
+    rows: rows.value.map((r) => r.slice()),
+    resultLines: resultLines.value.slice(),
+    solver: def?.solver,
+    seed: props.experimentId,
+    fit: analysisFit.value ? { label: analysisFit.value.label, params: analysisFit.value.params, r2: analysisFit.value.r2 } : undefined,
+    source: 'experiment'
+  })
+}
+
+async function saveSnapshotV3(): Promise<void> {
+  if (!rows.value.length) { noteText.value = '请先运行实验并记录数据，再保存快照。'; return }
+  const snap = currentSnapshot()
+  await labDB.put('snapshots', snap)
+  downloadFile(`快照_${props.experimentId}.json`, JSON.stringify({ format: 'scilab.snapshot.v3', snapshot: snap }, null, 2), 'application/json')
+  noteText.value = `已保存可复现快照 ${snap.id.slice(0, 26)}…（SHA-256 ${snap.checksum.slice(0, 10)}）`
+}
+
+function exportReportV3(format: 'html' | 'markdown'): void {
+  const def = getSceneDef(props.experimentId)
+  const snap = rows.value.length ? currentSnapshot() : null
+  const report = buildReportV3({
+    experimentId: props.experimentId,
+    title: props.title,
+    guide: def?.guide,
+    params: { ...paramValues.value },
+    paramLabels: Object.fromEntries(params.value.map((p) => [p.id, p.label])),
+    rows: rows.value.map((r) => r.slice()),
+    headers: columns.value.map((c) => c.label),
+    resultLines: resultLines.value.slice(),
+    fit: analysisFit.value,
+    snapshot: snap,
+    attribution: def?.meta?.attribution
+  })
+  const content = format === 'html' ? reportToHTML(report) : reportToMarkdown(report)
+  downloadFile(`报告3.0_${props.experimentId}.${format === 'html' ? 'html' : 'md'}`, content, format === 'html' ? 'text/html' : 'text/markdown')
+  noteText.value = `报告 3.0 已导出（${format === 'html' ? 'HTML' : 'Markdown'}）。`
+}
+
+/** V3：题库作答 → BKT 掌握度 + 错题本（异步写入 IndexedDB，失败静默降级） */
+async function onQuizAnswers(list: QuizAnswerDetail[]): Promise<void> {
+  try {
+    const now = Date.now()
+    const key = knowledgeKey(props.experimentId)
+    const all = await labDB.getAll<MasteryRecord>('attempts')
+    let rec = all.find((r) => r.id === `mastery.${key}`) ?? newMastery(key, now)
+    for (const a of list) rec = updateMastery(rec, a.chosen === a.answer, now)
+    await labDB.put('attempts', rec)
+    const cards = await labDB.getAll<MistakeCard>('cards')
+    const fresh = collectMistakes(list, props.experimentId, cards, now)
+    for (const c of fresh) await labDB.put('cards', c)
+    if (fresh.length) noteText.value = `已把 ${fresh.length} 道错题加入复习队列`
+  } catch { /* 存储不可用时不影响答题流程 */ }
 }
 
 /* ───── V2：参数扫描（T9） ───── */
@@ -634,15 +776,31 @@ const guideSteps = computed(() => {
   ]
 })
 
-function askAi(): void {
-  const hit = searchFaq(props.experimentId, aiQuestion.value.trim())
-  if (hit) {
-    aiAnswer.value = hit.a
-    aiHit.value = true
-  } else {
-    aiAnswer.value = '这个问题超出了本地知识库（离线检索式助教）。可以尝试提问：误差原因、视角操作、数据导出，或查看右侧「实验说明」。接入端侧大模型后（方案 W9 第②级）可回答更开放的问题。'
-    aiHit.value = false
+let assistantEngine: AssistantEngine | null = null
+function getAssistant(): AssistantEngine {
+  if (!assistantEngine) {
+    const scenes = allSceneIds().map((id) => {
+      const d = getSceneDef(id)
+      return { id, title: d?.title ?? id, guide: d?.guide ?? '', meta: d?.meta }
+    })
+    assistantEngine = new AssistantEngine(docsFromScenes(scenes))
   }
+  return assistantEngine
+}
+
+/** V3：BM25 检索增强（离线）+ 数据诊断；保留 V2 FAQ 作为精确命中兜底 */
+function askAi(): void {
+  const q = aiQuestion.value.trim()
+  const hit = searchFaq(props.experimentId, q)
+  const ans = getAssistant().ask(q, { experimentId: props.experimentId, rows: rows.value })
+  const parts: string[] = []
+  if (hit) parts.push(`【实验速查】${hit.a}`)
+  parts.push(ans.text)
+  if (ans.formula) parts.push(`【公式】${ans.formula.name}：${ans.formula.latex}　${ans.formula.description}`)
+  if (ans.diagnostics.length && /数据|误差|拟合|异常/.test(q)) parts.push(`【数据诊断】${ans.diagnostics.join(' ')}`)
+  if (ans.sources.length) parts.push(`【参考】${ans.sources.map((s) => s.title).join('、')}`)
+  aiAnswer.value = parts.join('\n\n')
+  aiHit.value = !!hit || ans.sources.length > 0
 }
 
 const examDef = computed(() => getSceneDef(props.experimentId)?.exam ?? null)
@@ -666,6 +824,9 @@ function onFitInfo(r2: number): void {
       <span class="title">{{ title }}</span>
       <button class="tool-btn" @click="exportReport">导出报告</button>
       <button class="tool-btn" @click="exportCsv" v-if="columns.length">导出 CSV</button>
+      <button class="tool-btn" @click="openAnalysis">数据分析</button>
+      <button class="tool-btn" @click="saveSnapshotV3">保存快照</button>
+      <button class="tool-btn" @click="exportReportV3('html')">报告 3.0</button>
       <button class="tool-btn" v-if="examDef" :class="{ hot: examScore }" @click="examOpen = !examOpen; examScore = examOpen ? examScore : null">
         {{ examScore ? `考核 ${examScore.total} 分` : '考核模式' }}
       </button>
@@ -700,6 +861,33 @@ function onFitInfo(r2: number): void {
         @input="applyReplay(replayProgress)"
       />
       <span class="replay-time">{{ (replayProgress * recDuration).toFixed(1) }}s / {{ recDuration.toFixed(1) }}s</span>
+    </div>
+
+    <!-- V3：数据分析弹窗（拟合 / 频谱 / 不确定度 / 离群点） -->
+    <div class="ai-mask" v-if="analysisOpen" @click.self="analysisOpen = false">
+      <div class="ai-dialog v3-analysis">
+        <div class="ai-head">
+          <span>数据分析 · V3 科学计算内核（离线）</span>
+          <button class="ai-close" @click="analysisOpen = false">✕</button>
+        </div>
+        <div class="ai-body">
+          <p class="v3-msg">{{ analysisMsg }}</p>
+          <div v-if="analysisFit" class="v3-card">
+            <div class="v3-card-t">拟合 · {{ analysisFit.label }}</div>
+            <div>R² {{ analysisFit.r2.toFixed(6) }} · 调整 R² {{ analysisFit.adjR2.toFixed(6) }} · RMSE {{ analysisFit.rmse.toPrecision(4) }}</div>
+            <div class="v3-mono">{{ analysisFit.params.map((v, i) => `p${i} = ${v.toPrecision(6)} ± ${analysisFit!.stdErrors[i].toPrecision(3)}`).join('　') }}</div>
+            <div>AIC {{ analysisFit.aic.toFixed(2) }} · BIC {{ analysisFit.bic.toFixed(2) }} · κ {{ analysisFit.condition.toExponential(2) }}</div>
+          </div>
+          <div v-if="analysisFreq" class="v3-card"><div class="v3-card-t">频谱分析</div><div>{{ analysisFreq }}</div></div>
+          <div v-if="analysisGum" class="v3-card"><div class="v3-card-t">测量不确定度（GUM + 蒙特卡洛）</div><div>{{ analysisGum }}</div></div>
+          <div class="v3-card"><div class="v3-card-t">离群点（IQR 准则）</div><div>{{ analysisOutliers.length ? `第 ${analysisOutliers.join('、')} 行疑似异常，建议复核读数` : '未发现离群点' }}</div></div>
+          <div class="v3-actions">
+            <button class="btn sm" @click="openAnalysis">重新分析</button>
+            <button class="btn sm" @click="exportReportV3('markdown')">导出 Markdown</button>
+            <button class="btn sm" @click="saveSnapshotV3">保存可复现快照</button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- AI 助教弹窗 -->
@@ -763,6 +951,7 @@ function onFitInfo(r2: number): void {
           :phase="quizOpen"
           :questions="quizOpen === 'preview' ? quizDef.preview : quizDef.review"
           @done="onQuizDone"
+          @answers="onQuizAnswers"
           @close="quizOpen = null"
         />
       </div>
@@ -1379,4 +1568,17 @@ function onFitInfo(r2: number): void {
   color: #667;
   line-height: 1.7;
 }
+
+/* V3 数据分析弹窗 */
+.v3-analysis { width: min(560px, 92vw); }
+.v3-analysis .ai-body { max-height: 62vh; overflow: auto; }
+.v3-msg { font-size: 12px; color: #2c6654; margin: 0 0 10px; }
+.v3-card {
+  border: 1px solid #e5e9f0; border-left: 3px solid #3f8f79;
+  border-radius: 8px; padding: 9px 11px; margin-bottom: 9px;
+  font-size: 12px; color: #475569; line-height: 1.7;
+}
+.v3-card-t { font-weight: 600; color: #1f2937; margin-bottom: 2px; }
+.v3-mono { font-family: Consolas, monospace; color: #2c6654; }
+.v3-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
 </style>

@@ -1,17 +1,107 @@
 {
   "id": "college.rlc",
   "title": "RLC 串联电路谐振",
-  "camera": { "position": [0, 1.5, 6], "target": [0, 0, 0] },
+  "camera": {
+    "position": [
+      0,
+      1.5,
+      6
+    ],
+    "target": [
+      0,
+      0,
+      0
+    ]
+  },
   "objects": [],
   "params": [
-    { "id": "L", "label": "电感 L", "min": 0.1, "max": 10, "step": 0.1, "value": 1, "unit": "mH" },
-    { "id": "C", "label": "电容 C", "min": 0.1, "max": 10, "step": 0.1, "value": 1, "unit": "µF" },
-    { "id": "R", "label": "电阻 R", "min": 1, "max": 50, "step": 1, "value": 10, "unit": "Ω" }
+    {
+      "id": "L",
+      "label": "电感 L",
+      "min": 0.1,
+      "max": 10,
+      "step": 0.1,
+      "value": 1,
+      "unit": "mH"
+    },
+    {
+      "id": "C",
+      "label": "电容 C",
+      "min": 0.1,
+      "max": 10,
+      "step": 0.1,
+      "value": 1,
+      "unit": "µF"
+    },
+    {
+      "id": "R",
+      "label": "电阻 R",
+      "min": 1,
+      "max": 50,
+      "step": 1,
+      "value": 10,
+      "unit": "Ω"
+    }
   ],
   "records": [
-    { "id": "f", "label": "f (Hz)", "digits": 0 },
-    { "id": "I", "label": "I (A)", "digits": 3 }
+    {
+      "id": "f",
+      "label": "f (Hz)",
+      "digits": 0
+    },
+    {
+      "id": "I",
+      "label": "I (A)",
+      "digits": 3
+    }
   ],
-  "curve": { "x": "f", "y": "I", "title": "幅频特性 I – f（谐振峰在 f₀ = 1/(2π√LC)）" },
-  "guide": "RLC 串联电路（U = 5V）：阻抗 Z = √(R² + (ωL − 1/ωC)²)，当 ωL = 1/ωC 时电路谐振，电流最大 I₀ = U/R。品质因数 Q = (1/R)√(L/C) 决定曲线尖锐程度。改变 L、C 可移动谐振频率，改变 R 可调节带宽。"
+  "curve": {
+    "x": "f",
+    "y": "I",
+    "title": "幅频特性 I – f（谐振峰在 f₀ = 1/(2π√LC)）"
+  },
+  "guide": "RLC 串联电路（U = 5V）：阻抗 Z = √(R² + (ωL − 1/ωC)²)，当 ωL = 1/ωC 时电路谐振，电流最大 I₀ = U/R。品质因数 Q = (1/R)√(L/C) 决定曲线尖锐程度。改变 L、C 可移动谐振频率，改变 R 可调节带宽。",
+  "meta": {
+    "dslVersion": "2.0.0",
+    "version": "1.0.0",
+    "subject": "college",
+    "difficulty": 2,
+    "authors": [
+      "智实验项目组"
+    ],
+    "license": "Proprietary",
+    "attribution": [
+      {
+        "project": "dmitry4287474/physviz-engine",
+        "license": "Apache-2.0",
+        "kind": "algorithm",
+        "url": "https://github.com/dmitry4287474/physviz-engine",
+        "note": "参考电路节点分析与测试组织方式"
+      }
+    ],
+    "pedagogy": {
+      "objectives": [
+        "RLC 串联电路谐振"
+      ],
+      "competencies": [
+        "观察与测量",
+        "数据处理",
+        "误差分析"
+      ]
+    },
+    "tags": [
+      "college",
+      "V3"
+    ]
+  },
+  "solver": {
+    "kind": "circuit",
+    "note": "AC 小信号扫频使用复数 MNA 实嵌入求解"
+  },
+  "analysis": {
+    "spectrum": {
+      "column": "I",
+      "sampleRate": 1000
+    }
+  }
 }

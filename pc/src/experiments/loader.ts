@@ -6,6 +6,9 @@ import type { Engine } from '../engine/core'
 import { PhysicsWorld } from '../engine/physics'
 import type { SceneDef, ExperimentContext, ExperimentLogic, QuizDef } from './types'
 import { getLogic } from './registry'
+import { registerBuiltin, getRegisteredScene, getRegisteredQuiz, listPackages, allPackageIssues } from './packages'
+import { GenericNumericLogic } from './logic/generic'
+import type { ValidationReport } from './validate'
 
 const modules = import.meta.glob('../../experiments/*/scene.json', {
   eager: true,
@@ -29,16 +32,24 @@ for (const [path, quiz] of Object.entries(quizModules)) {
   if (m) QUIZZES.set(m[1], quiz)
 }
 
+// V3：把编译期内置包注册到统一注册中心（迁移 + 校验，仅收集问题不阻断）
+for (const [id, def] of SCENES) registerBuiltin(def, QUIZZES.get(id))
+
 export function getQuiz(id: string): QuizDef | undefined {
-  return QUIZZES.get(id)
+  return getRegisteredQuiz(id) ?? QUIZZES.get(id)
 }
 
 export function getSceneDef(id: string): SceneDef | undefined {
-  return SCENES.get(id)
+  return getRegisteredScene(id) ?? SCENES.get(id)
 }
 
 export function allSceneIds(): string[] {
-  return [...SCENES.keys()]
+  return [...new Set([...SCENES.keys(), ...listPackages().map((p) => p.scene.id)])]
+}
+
+/** V3：全部实验包的校验问题（供「关于/诊断」页面展示） */
+export function packageIssues(): Array<{ id: string; report: ValidationReport }> {
+  return allPackageIssues()
 }
 
 /** 按定义构建场景，返回 {physics, logic}；调用方负责每帧 step/update */
@@ -46,7 +57,9 @@ export function buildExperiment(engine: Engine, def: SceneDef, post: (t: string,
   physics: PhysicsWorld
   logic: ExperimentLogic
 } | null {
-  const logic = getLogic(def.id)
+  // V3：导入包没有专属 TS 逻辑时，用声明式数值方程驱动通用求解器
+  const logic: ExperimentLogic | null = getLogic(def.id)
+    ?? (def.solver?.equations?.length ? new GenericNumericLogic() : null)
   if (!logic) return null
 
   // 相机

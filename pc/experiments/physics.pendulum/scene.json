@@ -120,5 +120,96 @@
       "开始实验",
       "仪器读数"
     ]
+  },
+  "meta": {
+    "dslVersion": "2.0.0",
+    "version": "1.0.0",
+    "subject": "physics",
+    "difficulty": 2,
+    "authors": [
+      "智实验项目组"
+    ],
+    "license": "Proprietary",
+    "attribution": [
+      {
+        "project": "myphysicslab/myphysicslab",
+        "license": "Apache-2.0",
+        "kind": "algorithm",
+        "url": "https://github.com/myphysicslab/myphysicslab",
+        "note": "仅参考自适应步长与能量系统分层思想；ODE 求解器为独立实现"
+      },
+      {
+        "project": "PhET Interactive Simulations",
+        "license": "GPL-3.0",
+        "kind": "pedagogy",
+        "url": "https://phet.colorado.edu",
+        "note": "仅参考探究式参数反馈理念；未使用其代码、资源、名称与商标"
+      }
+    ],
+    "pedagogy": {
+      "objectives": [
+        "单摆测重力加速度"
+      ],
+      "competencies": [
+        "观察与测量",
+        "数据处理",
+        "误差分析"
+      ]
+    },
+    "tags": [
+      "physics",
+      "V3"
+    ]
+  },
+  "solver": {
+    "kind": "ode",
+    "solver": "rk45",
+    "dt": 0.01,
+    "rtol": 1e-8,
+    "atol": 1e-10,
+    "tEnd": 10,
+    "equations": [
+      "omega",
+      "-(gravity/length)*sin(theta)"
+    ],
+    "stateNames": [
+      "theta",
+      "omega"
+    ],
+    "paramNames": [
+      "length",
+      "gravity"
+    ],
+    "initial": [
+      0.2618,
+      0
+    ],
+    "energy": "0.5*length^2*omega^2 + gravity*length*(1-cos(theta))",
+    "events": [
+      {
+        "id": "lowest-point",
+        "expression": "omega"
+      }
+    ],
+    "note": "非线性单摆方程（不做小角度近似），能量表达式用于守恒诊断"
+  },
+  "analysis": {
+    "fit": {
+      "model": "linear",
+      "xColumn": "n",
+      "yColumn": "T"
+    },
+    "uncertainty": {
+      "expression": "4*pi^2*L/T^2",
+      "params": [
+        "L",
+        "T"
+      ],
+      "sigmas": [
+        0.002,
+        0.01
+      ]
+    },
+    "outliers": true
   }
 }

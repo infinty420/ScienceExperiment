@@ -1,0 +1,41 @@
+name: PC 主线 CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  quality:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: pc
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 配置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: pc/package-lock.json
+
+      - name: 安装依赖
+        run: npm ci
+
+      - name: 类型检查
+        run: npm run typecheck
+
+      - name: 单元测试
+        run: npm test
+
+      - name: PC 生产构建
+        run: npm run build
+
+      - name: 鸿蒙 Web Bundle 构建
+        run: npx vite build --config vite.hos.config.ts
+
+      - name: 实验包 DSL 体检
+        run: node scripts/check-packages.mjs

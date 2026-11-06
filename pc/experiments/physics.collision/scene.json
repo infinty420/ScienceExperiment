@@ -135,5 +135,37 @@
       "恢复系数",
       "开始实验"
     ]
+  },
+  "meta": {
+    "dslVersion": "2.0.0",
+    "version": "1.0.0",
+    "subject": "physics",
+    "difficulty": 2,
+    "authors": [
+      "智实验项目组"
+    ],
+    "license": "Proprietary",
+    "attribution": [
+      {
+        "project": "本项目原创",
+        "license": "Proprietary",
+        "kind": "idea",
+        "note": "场景、数据与逻辑均为本项目独立实现，未复用第三方代码或资源"
+      }
+    ],
+    "pedagogy": {
+      "objectives": [
+        "动量守恒碰撞"
+      ],
+      "competencies": [
+        "观察与测量",
+        "数据处理",
+        "误差分析"
+      ]
+    },
+    "tags": [
+      "physics",
+      "V3"
+    ]
   }
 }

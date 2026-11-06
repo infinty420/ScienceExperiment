@@ -81,5 +81,61 @@
       "开始实验",
       "仪器读数"
     ]
+  },
+  "meta": {
+    "dslVersion": "2.0.0",
+    "version": "1.0.0",
+    "subject": "physics",
+    "difficulty": 2,
+    "authors": [
+      "智实验项目组"
+    ],
+    "license": "Proprietary",
+    "attribution": [
+      {
+        "project": "Kunz5/circuit-lab",
+        "license": "MIT",
+        "kind": "algorithm",
+        "url": "https://github.com/Kunz5/circuit-lab",
+        "note": "参考 MNA stamping 与部分主元 LU 的公开算法；求解器为独立实现"
+      }
+    ],
+    "pedagogy": {
+      "objectives": [
+        "欧姆定律验证"
+      ],
+      "competencies": [
+        "观察与测量",
+        "数据处理",
+        "误差分析"
+      ]
+    },
+    "tags": [
+      "physics",
+      "V3"
+    ]
+  },
+  "solver": {
+    "kind": "circuit",
+    "note": "直流工作点由 kernel/circuit.ts 的 MNA + 部分主元 LU 独立求解"
+  },
+  "analysis": {
+    "fit": {
+      "model": "linear",
+      "xColumn": "U",
+      "yColumn": "I"
+    },
+    "uncertainty": {
+      "expression": "U/I",
+      "params": [
+        "U",
+        "I"
+      ],
+      "sigmas": [
+        0.02,
+        0.0005
+      ]
+    },
+    "outliers": true
   }
 }

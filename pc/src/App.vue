@@ -1,11 +1,16 @@
 <script setup lang="ts">
-import { ref, computed, onUnmounted } from 'vue'
+import { ref, computed, onUnmounted, onMounted } from 'vue'
 import { SUBJECTS, EXPERIMENTS, experimentsOf, difficultyLabel, type ExperimentInfo } from './data/experiments'
 import { getHistory, clearHistory, type HistoryEntry } from './store/history'
 import { getFavorites, toggleFavorite, getRecent, pushRecent } from './store/favorites'
 import ExperimentStage from './components/ExperimentStage.vue'
 import CompareChart, { type CompareSet } from './components/CompareChart.vue'
 import StatsDashboard from './components/StatsDashboard.vue'
+import ResearchLab from './components/ResearchLab.vue'
+import LearningCenter from './components/LearningCenter.vue'
+import { getProgress, overallProgress, weakExperiments } from './store/progress'
+import { labDB } from './learning/db'
+import { packageStats } from './experiments/packages'
 import appIcon from './assets/app-icon.png'
 
 /** 学科色 / 图标（卡片视觉体系用） */
@@ -16,7 +21,7 @@ function subjectIcon(key: string): string {
   return SUBJECTS.find((s) => s.key === key)?.icon ?? '⚛'
 }
 
-type View = 'list' | 'stage' | 'compare'
+type View = 'list' | 'stage' | 'compare' | 'research' | 'learning'
 
 const EXPERIMENTS_DEMO: ExperimentInfo = EXPERIMENTS.find((e) => e.id === 'w1.demo')!
 
@@ -80,12 +85,46 @@ function backToList(): void {
   view.value = 'list'
   current.value = null
   history.value = getHistory()
+  dataVersion.value++
 }
 
 function onClearHistory(): void {
   clearHistory()
   history.value = []
 }
+
+/* ───── V3：数值研究台 / 学习中心 / 薄弱实验推荐 ───── */
+const dataVersion = ref(0)
+const packageCount = computed(() => packageStats().total || 27)
+const weakList = computed(() => {
+  void dataVersion.value
+  return weakExperiments().slice(0, 3)
+})
+const overallPct = computed(() => {
+  void dataVersion.value
+  return overallProgress(EXPERIMENTS.filter((e) => e.available).map((e) => e.id))
+})
+
+function openResearch(): void { view.value = 'research' }
+function openLearning(): void { dataVersion.value++; view.value = 'learning' }
+
+function openFromLearning(id: string): void {
+  const info = EXPERIMENTS.find((e) => e.id === id)
+  if (info) { openExperiment(info); return }
+  // 运行时导入的实验包：动态生成入口信息
+  const subject = id.split('.')[0]
+  openExperiment({
+    id, title: id, subject, subjectLabel: subject,
+    difficulty: 2, wave: 'V3', available: true
+  })
+}
+
+onMounted(async () => {
+  await labDB.init()
+  await labDB.migrateLegacy()
+  getProgress()
+  dataVersion.value++
+})
 
 /* ───── V2：对照实验模式（T3） ───── */
 const availableExps = computed(() => EXPERIMENTS.filter((e) => e.available))
@@ -176,6 +215,14 @@ onUnmounted(() => {
           <span class="nav-icon">⇄</span>
           <span>对照实验</span>
         </div>
+        <div class="nav-item" :class="{ active: view === 'research' }" @click="openResearch">
+          <span class="nav-icon">∫</span>
+          <span>数值研究台</span>
+        </div>
+        <div class="nav-item" :class="{ active: view === 'learning' }" @click="openLearning">
+          <span class="nav-icon">◎</span>
+          <span>学习中心</span>
+        </div>
         <div
           class="nav-item"
           :class="{ active: view === 'list' && subjectKey === '__history' }"
@@ -186,7 +233,7 @@ onUnmounted(() => {
         </div>
       </nav>
 
-      <div class="sidebar-footer">v3.0 · 27 个实验 · 全程离线</div>
+      <div class="sidebar-footer">v3.1 · {{ packageCount }} 个实验包 · 掌握度 {{ overallPct }}% · 全程离线</div>
     </aside>
 
     <!-- 主区域 -->
@@ -228,6 +275,10 @@ onUnmounted(() => {
           <div class="progress-bar"><div class="progress-fill" :style="{ width: progressPct + '%' }"></div></div>
           <span class="progress-pct">{{ progressPct }}%</span>
         </div>
+        <div v-if="weakList.length" class="weak-strip">
+          <span>⚠ 薄弱实验：{{ weakList.map(w => w.id).join('、') }}（课后检验低于 60 分）</span>
+          <button @click="openLearning">查看复习计划 →</button>
+        </div>
 
         <div class="list-grid">
           <div
@@ -260,7 +311,7 @@ onUnmounted(() => {
       </template>
 
       <template v-else-if="view === 'stage' && current">
-        <ExperimentStage :experiment-id="current.id" :title="current.title" @back="backToList" />
+        <ExperimentStage :key="current.id" :experiment-id="current.id" :title="current.title" @back="backToList" />
       </template>
 
       <template v-else-if="view === 'compare'">
@@ -311,6 +362,14 @@ onUnmounted(() => {
             <CompareChart :set-a="setA" :set-b="setB" />
           </div>
         </div>
+      </template>
+
+      <template v-else-if="view === 'research'">
+        <ResearchLab />
+      </template>
+
+      <template v-else-if="view === 'learning'">
+        <LearningCenter @open-experiment="openFromLearning" />
       </template>
 
       <template v-else-if="subjectKey === '__history'">
@@ -422,6 +481,29 @@ onUnmounted(() => {
 .progress-label {
   font-size: 12px;
   color: #778;
+  white-space: nowrap;
+}
+
+.weak-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 28px 14px;
+  padding: 9px 12px;
+  border: 1px solid #f3d9a8;
+  background: #fff8ea;
+  border-radius: 8px;
+  font-size: 12px;
+  color: #96650f;
+}
+
+.weak-strip button {
+  border: none;
+  background: none;
+  color: #b3702d;
+  font-size: 12px;
+  cursor: pointer;
   white-space: nowrap;
 }
 

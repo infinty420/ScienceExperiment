@@ -26,6 +26,10 @@ struct Index {
     });
   }
 
+  private openScene3dPoc(): void {
+    router.pushUrl({ url: 'pages/Scene3dPocPage' });
+  }
+
   @Builder
   homePage() {
     Scroll() {
@@ -69,6 +73,35 @@ struct Index {
         .borderRadius(12)
         .onClick(() => {
           this.openDemo();
+        })
+
+        // 原生 Scene3D 渲染 PoC 入口（第二阶段技术验证）
+        Row({ space: 10 }) {
+          Text('◆')
+            .fontSize(18)
+            .fontColor('#3e6fb0')
+          Column({ space: 2 }) {
+            Text('原生 Scene3D 渲染验证')
+              .fontSize(15)
+              .fontWeight(FontWeight.Medium)
+              .fontColor('#222222')
+            Text('ArkGraphics 3D · 帧率实测 · 无闪屏白屏')
+              .fontSize(12)
+              .fontColor('#999999')
+          }
+          .alignItems(HorizontalAlign.Start)
+          .layoutWeight(1)
+          Text('进入')
+            .fontSize(13)
+            .fontColor('#3e6fb0')
+        }
+        .width('100%')
+        .padding(14)
+        .backgroundColor('#eaf0fa')
+        .borderRadius(12)
+        .margin({ top: 10 })
+        .onClick(() => {
+          this.openScene3dPoc();
         })
 
         // 学科入口

@@ -35,10 +35,12 @@ export interface InstrumentDef {
 
 /** V2 考核目标（T4） */
 export interface ExamGoal {
-  /** 指标名：匹配结果行"key: value"或内置 rows / rowCount */
-  metric: string
+  /** 指标名：匹配结果行"key: value"或内置 rows / rowCount（数据量类目标可省略） */
+  metric?: string
   /** 期望真值（数据精度类目标） */
   expect?: number
+  /** V3：期望真值取自某个参数（与 scene.json 实际契约一致，消除类型断言） */
+  expectFromParam?: string
   /** 容差（|实测-期望|<=tol 满分，线性衰减到 2·tol 为 0） */
   tolerance?: number
   /** 该目标权重分 */
@@ -70,6 +72,12 @@ export interface SceneDef {
   instruments?: InstrumentDef[]
   /** V2：考核模式（缺省 = 该实验不提供考核） */
   exam?: ExamDef
+  /** V3 DSL v2：实验包元数据、许可证与思想来源 */
+  meta?: import('./schema').ExperimentMeta
+  /** V3 DSL v2：数值方法声明（数值研究台消费） */
+  solver?: import('./schema').SolverSpec
+  /** V3 DSL v2：数据分析方法声明（分析面板消费） */
+  analysis?: import('./schema').AnalysisSpec
 }
 
 /** 实验逻辑上下文（由实验台注入） */
@@ -100,7 +108,7 @@ export type Row = number[]
 /** V2：操作事件（AI 诊断 + 考核步骤分 + 录制共用） */
 export interface OpEvent {
   t: number
-  type: 'param' | 'start' | 'pause' | 'reset' | 'record' | 'instrument' | 'fit'
+  type: 'param' | 'start' | 'pause' | 'reset' | 'record' | 'instrument' | 'fit' | 'analysis' | 'snapshot' | 'review'
   detail: string
 }
 
@@ -110,6 +118,10 @@ export interface QuizQuestion {
   options: string[]
   answer: number
   explain: string
+  /** V3：知识点标签（BKT 掌握度按知识点追踪） */
+  knowledge?: string
+  /** V3：难度 1-3（影响复习排程与掌握度先验） */
+  difficulty?: number
 }
 
 export interface QuizDef {
